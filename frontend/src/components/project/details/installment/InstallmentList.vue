@@ -17,7 +17,7 @@
           <v-list-item v-bind="props" @click="toggleDetails(index)">
             
               <v-list-item-title>
-                Parcela {{ index + 1 }} - Status: {{ installment.status }}  - R$ {{ formatNumber(installment.amount) }}
+                Parcela {{ index + 1 }} - Estado: {{ installment.status }}  - R$ {{ formatNumber(installment.amount) }}
               </v-list-item-title>
 
             <v-list-item-action>

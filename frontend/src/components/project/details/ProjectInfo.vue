@@ -15,7 +15,7 @@
         <strong>Processo SEI:</strong> {{ project.processo_sei }}
       </v-col>
       <v-col cols="12" md="6">
-        <strong>Status:</strong> {{ project.status || 'N/A' }}
+        <strong>Estado:</strong> {{ project.status || 'N/A' }}
       </v-col>
     </v-row>
 
