@@ -56,6 +56,22 @@
           <strong>UGR:</strong> {{ project.ugr }}
         </v-col>
       </v-row>
+      <v-row>
+        <v-col cols="12" md="6">
+          <strong>Fonte de Recurso:</strong> {{ project.funding_source }}
+        </v-col>
+        <v-col cols="12" md="6">
+          <strong>Natureza Detalhada:</strong> {{ project.detailed_nature }}
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12" md="6">
+          <strong>Plano Interno:</strong> {{ project.internal_plan }}
+        </v-col>
+        <v-col cols="12" md="6">
+          <strong>Nome do Plano Interno:</strong> {{ project.internal_plan_name }}
+        </v-col>
+      </v-row>
     </template>
 
     <h3 class="section-title"><v-icon class="mr-1">mdi-cash-multiple</v-icon>Orçamento</h3>

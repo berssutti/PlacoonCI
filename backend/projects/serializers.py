@@ -36,6 +36,10 @@ class ProjectSerializer(serializers.ModelSerializer):
             'nota_dotacao',
             'ptres',
             'ugr',
+            'funding_source',
+            'detailed_nature',
+            'internal_plan',
+            'internal_plan_name',
             'areas',
         ]
 
