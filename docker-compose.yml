@@ -14,7 +14,6 @@ services:
   backend:
     build: ./backend
     container_name: orcamento-execucao_backend
-    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app
     ports:

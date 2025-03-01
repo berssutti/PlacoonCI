@@ -1,0 +1,38 @@
+[
+    {
+      "model": "projects.area",
+      "pk": 1,
+      "fields": {
+        "name": "Engenharia de Software"
+      }
+    },
+    {
+      "model": "projects.area",
+      "pk": 2,
+      "fields": {
+        "name": "Engenharia Eletrônica"
+      }
+    },
+    {
+      "model": "projects.area",
+      "pk": 3,
+      "fields": {
+        "name": "Engenharia Automotiva"
+      }
+    },
+    {
+      "model": "projects.area",
+      "pk": 4,
+      "fields": {
+        "name": "Engenharia Aeroespacial"
+      }
+    },
+    {
+      "model": "projects.area",
+      "pk": 5,
+      "fields": {
+        "name": "Engenharia de Energia"
+      }
+    }
+  ]
+  
