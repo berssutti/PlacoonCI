@@ -46,7 +46,7 @@
           <v-select
             v-model="project.status"
             :items="statusOptions"
-            label="Status"
+            label="Estado"
             @change="$emit('status-change')"
           ></v-select>
         </v-col>

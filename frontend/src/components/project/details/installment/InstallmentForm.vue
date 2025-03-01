@@ -39,7 +39,7 @@
           <v-select
             v-model="localInstallment.status"
             :items="statusOptions"
-            label="Status"
+            label="Estado"
             :rules="[v => !!v || 'Campo obrigatório']"
           />
 
