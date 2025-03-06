@@ -3,7 +3,7 @@
     <v-app-bar app color="primary" dark>
       <v-toolbar-title>Execução Orçamentária</v-toolbar-title>
       <v-spacer></v-spacer>
-      <!-- <v-btn to="/overview" text>Visão Geral</v-btn> -->
+      <v-btn to="/" text>Visão Geral</v-btn>
       <v-btn to="/projects" text>Lista de Projetos</v-btn>
     </v-app-bar>
 

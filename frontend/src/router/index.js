@@ -3,8 +3,15 @@ import { createRouter, createWebHistory } from 'vue-router';
 import ProjectForm from '@/views/ProjectFormView.vue';
 import ProjectList from '@/views/ProjectListView.vue';
 import ProjectDetails from '@/views/ProjectDetailsView.vue';
+import Overview from '@/views/OverviewView.vue';
 
 const routes = [
+  {
+    path: '/',
+    name: 'Overview',
+    component: Overview,
+    meta: { title: 'Visão Geral' },
+  },
   {
     path: '/projects',
     name: 'ProjectList',
