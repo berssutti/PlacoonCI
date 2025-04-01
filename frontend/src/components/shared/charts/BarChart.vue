@@ -1,6 +1,6 @@
 <template>
-  <div class="chart-container">
-    <h3 class="chart-title">{{ graphTitle }}</h3>
+  <div class="chart-container" :style="{ height: `${height}px` }">
+    <h3 v-if="graphTitle" class="chart-title">{{ graphTitle }}</h3>
     <div class="chart-wrapper">
       <bar-chart :data="chartData" :options="chartOptions" />
     </div>
@@ -42,13 +42,31 @@ export default defineComponent({
     },
     graphTitle: {
       type: String,
-      required: true,
+      default: "",
+    },
+    height: {
+      type: Number,
+      default: 450,
     },
   },
   data() {
     return {
       chartData: null,
       chartOptions: null,
+      colors: [
+        "#4CAF50", // verde
+        "#2196F3", // azul
+        "#FFC107", // amarelo
+        "#9C27B0", // roxo
+        "#F44336", // vermelho
+        "#00BCD4", // ciano
+        "#FF9800", // laranja
+        "#3F51B5", // indigo
+        "#E91E63", // rosa
+        "#009688", // verde-azulado
+        "#8BC34A", // verde claro
+        "#673AB7", // roxo escuro
+      ],
       areaColors: {
         'Engenharia de Software': '#4CAF50',   // Verde
         'Engenharia de Energia': '#FFC107',    // Amarelo
@@ -69,17 +87,13 @@ export default defineComponent({
   },
   mounted() {
     this.prepareChartData();
-    
-    // Adicionar responsividade ao redimensionar a janela
     window.addEventListener('resize', this.handleResize);
   },
   beforeUnmount() {
-    // Remover o event listener quando o componente for desmontado
     window.removeEventListener('resize', this.handleResize);
   },
   methods: {
     handleResize() {
-      // Atualizar o gráfico quando a janela for redimensionada
       if (this.chartData) {
         this.$nextTick(() => {
           ChartJS.defaults.font.size = window.innerWidth < 768 ? 10 : 12;
@@ -93,7 +107,9 @@ export default defineComponent({
       }).format(value);
     },
     prepareChartData() {
+      console.log("Bar chart data", this.installments);
       if (!this.installments || this.installments.length === 0) {
+        console.log('No data to display Bar chart');
         this.chartData = {
           labels: [],
           datasets: []
@@ -136,8 +152,6 @@ export default defineComponent({
         });
       });
 
-      const defaultColor = '#777777';
-      
       const areaTotals = {};
       Array.from(areaNames).forEach(area => {
         areaTotals[area] = (areaDataMap[area] || []).reduce((sum, val) => sum + val, 0);
@@ -145,13 +159,18 @@ export default defineComponent({
       
       const sortedAreas = Array.from(areaNames).sort((a, b) => areaTotals[b] - areaTotals[a]);
       
-      const datasets = sortedAreas.map((area) => ({
-        label: area,
-        data: areaDataMap[area],
-        backgroundColor: this.areaColors[area] || defaultColor,
-        borderColor: '#ffffff',
-        borderWidth: 1,
-      }));
+      const datasets = sortedAreas.map((area, index) => {
+        // Usar as cores predefinidas, ou usar a paleta de cores do array
+        const color = this.areaColors[area] || this.colors[index % this.colors.length];
+        
+        return {
+          label: area,
+          data: areaDataMap[area],
+          backgroundColor: color,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        };
+      });
 
       this.chartData = {
         labels,
@@ -163,9 +182,9 @@ export default defineComponent({
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: "top",
+            position: "right",
             labels: {
-              usePointStyle: true,
+              boxWidth: 15,
               padding: 15,
               font: {
                 size: 12
@@ -253,11 +272,9 @@ export default defineComponent({
 .chart-container {
   display: flex;
   flex-direction: column;
-  height: 450px;
   padding: 15px;
   background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .chart-title {
@@ -273,6 +290,9 @@ export default defineComponent({
 .chart-wrapper {
   flex: 1;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .no-data {
@@ -287,7 +307,6 @@ export default defineComponent({
 
 @media (max-width: 767px) {
   .chart-container {
-    height: 350px;
     padding: 10px;
   }
   

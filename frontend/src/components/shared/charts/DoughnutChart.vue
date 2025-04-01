@@ -1,10 +1,10 @@
 <template>
-  <div class="chart-container">
-    <h3 class="chart-title">{{ graphTitle }}</h3>
+  <div class="chart-container" :style="{ height: `${height}px` }">
+    <h3 v-if="graphTitle" class="chart-title">{{ graphTitle }}</h3>
     <div class="chart-wrapper">
       <doughnut :data="chartData" :options="chartOptions" />
     </div>
-    <div v-if="chartData && chartData.datasets.length === 0" class="no-data">
+    <div v-if="chartData && chartData.datasets[0].data.length === 0" class="no-data">
       <p>Não há dados para exibir.</p>
     </div>
   </div>
@@ -27,7 +27,11 @@ export default defineComponent({
     },
     graphTitle: {
       type: String,
-      required: true,
+      default: "",
+    },
+    height: {
+      type: Number,
+      default: 400,
     },
   },
   data() {
@@ -36,21 +40,45 @@ export default defineComponent({
       chartOptions: {
         responsive: true,
         maintainAspectRatio: false,
+        cutout: '65%',
         plugins: {
           legend: {
-            position: "top",
+            position: "right",
+            labels: {
+              padding: 15,
+              boxWidth: 15,
+              font: {
+                size: 12
+              }
+            }
           },
           tooltip: {
             callbacks: {
               label: (context) => {
                 const label = context.label || "";
                 const value = context.raw || 0;
-                return `${label}: ${this.formatCurrency(value)}`;
+                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${this.formatCurrency(value)} (${percentage}%)`;
               },
             },
           },
         },
       },
+      colors: [
+        "#4CAF50", // verde
+        "#2196F3", // azul
+        "#FFC107", // amarelo
+        "#9C27B0", // roxo
+        "#F44336", // vermelho
+        "#00BCD4", // ciano
+        "#FF9800", // laranja
+        "#3F51B5", // indigo
+        "#E91E63", // rosa
+        "#009688", // verde-azulado
+        "#8BC34A", // verde claro
+        "#673AB7", // roxo escuro
+      ],
     };
   },
   watch: {
@@ -73,27 +101,34 @@ export default defineComponent({
       if (!this.areasSummary || this.areasSummary.length === 0) {
         this.chartData = {
           labels: [],
-          datasets: [],
+          datasets: [{ data: [] }],
         };
         return;
       }
 
-      const labels = this.areasSummary.map((area) => area.name);
-      const data = this.areasSummary.map((area) => area.executed);
+      // Filtrar áreas com valores positivos
+      const filteredAreas = this.areasSummary.filter(area => area.value > 0);
+      
+      // Organizar áreas por valor (maior para menor)
+      filteredAreas.sort((a, b) => b.value - a.value);
+      
+      const labels = filteredAreas.map(area => area.name);
+      const data = filteredAreas.map(area => area.value);
+      
+      // Criar array de cores com quantidade suficiente
+      const backgroundColors = [];
+      for (let i = 0; i < labels.length; i++) {
+        backgroundColors.push(this.colors[i % this.colors.length]);
+      }
 
       this.chartData = {
         labels,
         datasets: [
           {
-            label: "Orçamento Executado",
             data,
-            backgroundColor: [
-              "#4CAF50",
-              "#FFC107",
-              "#2196F3",
-              "#9C27B0",
-              "#F44336",
-            ],
+            backgroundColor: backgroundColors,
+            borderWidth: 2,
+            borderColor: '#fff'
           },
         ],
       };
@@ -106,11 +141,9 @@ export default defineComponent({
 .chart-container {
   display: flex;
   flex-direction: column;
-  height: 400px;
   padding: 15px;
   background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .chart-title {
@@ -126,6 +159,9 @@ export default defineComponent({
 .chart-wrapper {
   flex: 1;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .no-data {
