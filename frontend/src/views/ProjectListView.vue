@@ -1,27 +1,46 @@
 <template>
   <v-container>
-    <v-row align="center" justify="space-between" class="mb-4">
-      <v-col>
-        <h1>Lista de Projetos</h1>
-      </v-col>
-      <v-col cols="auto">
-        <v-btn color="primary" @click="goToCreateProject">Cadastrar Novo Projeto</v-btn>
+    <v-row>
+      <v-col cols="12">
+        <v-card elevation="2" class="rounded-lg">
+          <v-card-title class="text-h4 primary--text py-4 px-6">
+            <v-icon large class="mr-2">mdi-folder-multiple</v-icon>
+            Lista de Projetos
+          </v-card-title>
+        </v-card>
       </v-col>
     </v-row>
 
-    <ProjectFilter
-      :years="years"
-      :initial-filters="initialFilters"
-      @update:filters="updateFilters"
-    />
+    <v-row class="mt-4">
+      <v-col cols="12" md="8">
+        <ProjectFilter
+          :years="years"
+          :initial-filters="initialFilters"
+          @update:filters="updateFilters"
+        />
+      </v-col>
+      <v-col cols="12" md="4" class="text-right">
+        <v-btn 
+          color="primary"
+          size="x-large"
+          elevation="2" 
+          class="rounded-lg" 
+          @click="goToCreateProject"
+        >
+          <v-icon left>mdi-plus</v-icon>
+          Cadastrar Novo Projeto
+        </v-btn>
+      </v-col>
+    </v-row>
 
     <template v-if="!loading">
-      <v-row v-if="filteredProjects.length > 0">
+      <v-row v-if="filteredProjects.length > 0" class="mt-4">
         <v-col
           v-for="project in paginatedProjects"
           :key="project.id"
           cols="12"
           md="4"
+          class="mb-4"
         >
           <ProjectCard
             :project="project"
@@ -30,9 +49,13 @@
         </v-col>
       </v-row>
       
-      <v-row v-else justify="center">
-        <v-col cols="12" class="text-center">
-          <p>Nenhum projeto encontrado.</p>
+      <v-row v-else justify="center" class="mt-4">
+        <v-col cols="12">
+          <v-card elevation="2" class="rounded-lg text-center py-6">
+            <v-icon size="64" color="grey lighten-1">mdi-folder-search-outline</v-icon>
+            <div class="text-h6 grey--text mt-4">Nenhum projeto encontrado.</div>
+            <div class="text-body-2 grey--text text--lighten-1 mt-2">Tente ajustar os filtros ou criar um novo projeto.</div>
+          </v-card>
         </v-col>
       </v-row>
 
@@ -41,16 +64,23 @@
           v-model="currentPage"
           :length="totalPages"
           total-visible="5"
+          color="primary"
+          circle
         ></v-pagination>
       </v-row>
     </template>
 
-    <v-row v-if="loading" justify="center">
-      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+    <v-row v-if="loading" justify="center" class="mt-4">
+      <v-col cols="12" class="text-center py-6">
+        <v-progress-circular indeterminate size="64" color="primary"></v-progress-circular>
+        <div class="text-h6 grey--text mt-4">Carregando projetos...</div>
+      </v-col>
     </v-row>
 
-    <v-row v-if="error" justify="center">
-      <v-alert type="error">{{ error }}</v-alert>
+    <v-row v-if="error" justify="center" class="mt-4">
+      <v-col cols="12">
+        <v-alert type="error" elevation="2" class="rounded-lg">{{ error }}</v-alert>
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -59,8 +89,8 @@
 import { ref, computed, onMounted, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProject } from '@/composables/useProject';
-import ProjectCard from '@/components/project/list/ProjectCard.vue';
 import ProjectFilter from '@/components/project/list/ProjectFilter.vue';
+import ProjectCard from '@/components/project/list/ProjectCard.vue';
 
 const router = useRouter();
 const { project: projects, loading, error, fetchProject } = useProject();
@@ -113,6 +143,54 @@ const paginatedProjects = computed(() => {
 const totalPages = computed(() => {
   return Math.max(1, Math.ceil(filteredProjects.value.length / itemsPerPage));
 });
+
+const formatDate = (dateString) => {
+  const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+  return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR', options);
+};
+
+const getProjectStatus = (project) => {
+  const start = new Date(project.start_date);
+  const end = new Date(project.end_date);
+  const today = new Date();
+  
+  if (today < start) return "Não Iniciado";
+  if (today > end) return "Concluído";
+  return "Em Andamento";
+};
+
+const getStatusColor = (project) => {
+  const status = getProjectStatus(project);
+  if (status === "Não Iniciado") return "grey";
+  if (status === "Em Andamento") return "primary";
+  return "success";
+};
+
+const getStatusIcon = (project) => {
+  const status = getProjectStatus(project);
+  if (status === "Não Iniciado") return "mdi-clock-outline";
+  if (status === "Em Andamento") return "mdi-progress-clock";
+  return "mdi-check-circle-outline";
+};
+
+const getRemainingTime = (project) => {
+  const start = new Date(project.start_date);
+  const end = new Date(project.end_date);
+  const today = new Date();
+  
+  if (today < start) {
+    const daysToStart = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
+    return `Inicia em ${daysToStart} dia${daysToStart !== 1 ? 's' : ''}`;
+  }
+  
+  if (today > end) {
+    const daysAfterEnd = Math.ceil((today - end) / (1000 * 60 * 60 * 24));
+    return `Finalizado há ${daysAfterEnd} dia${daysAfterEnd !== 1 ? 's' : ''}`;
+  }
+  
+  const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+  return `${daysRemaining} dia${daysRemaining !== 1 ? 's' : ''} restante${daysRemaining !== 1 ? 's' : ''}`;
+};
 
 const fetchProjects = async () => {
   try {
@@ -178,11 +256,24 @@ onMounted(fetchProjects);
 </script>
 
 <style scoped>
-h1 {
-  font-size: 1.8em;
-  font-weight: bold;
+.v-card {
+  transition: transform 0.3s, box-shadow 0.3s;
 }
-.v-btn {
-  margin-top: 10px;
+
+.v-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+.project-card {
+  cursor: pointer;
+}
+
+.h-100 {
+  height: 100%;
+}
+
+.rounded-lg {
+  border-radius: 12px !important;
 }
 </style>
