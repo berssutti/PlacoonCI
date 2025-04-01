@@ -22,10 +22,22 @@ class Project(models.Model):
     end_date = models.DateField()
     total_unb_amount_expected = models.FloatField()
     total_fcte_amount_expected = models.FloatField()
-    total_compensation_expected = models.FloatField()
-    total_compensation_executed = models.FloatField()
-    total_compensation_pending = models.FloatField()
-    total_compensation_overdue = models.FloatField()
+    total_compensation_expected = models.FloatField(
+        null=True,
+        blank=True
+    )
+    total_compensation_executed = models.FloatField(
+        null=True,
+        blank=True  
+    )
+    total_compensation_pending = models.FloatField(
+        null=True,
+        blank=True
+    )
+    total_compensation_overdue = models.FloatField(
+        null=True,
+        blank=True
+    )
     coordinator = models.CharField(max_length=100)
     substitute_coordinator = models.CharField(max_length=100)
     academic_supervisor = models.CharField(max_length=100)
