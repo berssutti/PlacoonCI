@@ -180,6 +180,14 @@ export default defineComponent({
       this.chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: {
+            bottom: 20,
+            left: 10,
+            right: 10,
+            top: 10
+          }
+        },
         plugins: {
           legend: {
             position: "right",
@@ -187,7 +195,8 @@ export default defineComponent({
               boxWidth: 15,
               padding: 15,
               font: {
-                size: 12
+                size: 12,
+                family: "'Roboto', sans-serif"
               }
             }
           },
@@ -201,10 +210,12 @@ export default defineComponent({
             padding: 10,
             titleFont: {
               size: 14,
-              weight: 'bold'
+              weight: 'bold',
+              family: "'Roboto', sans-serif"
             },
             bodyFont: {
-              size: 13
+              size: 13,
+              family: "'Roboto', sans-serif"
             },
             callbacks: {
               label: (context) => {
@@ -229,7 +240,8 @@ export default defineComponent({
               text: 'Mês',
               font: {
                 weight: 'bold',
-                size: 14
+                size: 14,
+                family: "'Roboto', sans-serif"
               },
               padding: 10
             },
@@ -238,7 +250,14 @@ export default defineComponent({
             },
             ticks: {
               maxRotation: 45,
-              minRotation: 45
+              minRotation: 45,
+              font: {
+                family: "'Roboto', sans-serif",
+                size: 11
+              },
+              padding: 5,
+              autoSkip: true,
+              maxTicksLimit: 12
             }
           },
           y: {
@@ -249,12 +268,16 @@ export default defineComponent({
               text: 'Valor (R$)',
               font: {
                 weight: 'bold',
-                size: 14
+                size: 14,
+                family: "'Roboto', sans-serif"
               },
               padding: 10
             },
             ticks: {
-              callback: (value) => this.formatCurrency(value)
+              callback: (value) => this.formatCurrency(value),
+              font: {
+                family: "'Roboto', sans-serif"
+              }
             }
           }
         },
@@ -275,6 +298,9 @@ export default defineComponent({
   padding: 15px;
   background-color: #ffffff;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 100%;
 }
 
 .chart-title {
@@ -285,6 +311,7 @@ export default defineComponent({
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid #eeeeee;
+  font-family: 'Roboto', sans-serif;
 }
 
 .chart-wrapper {
@@ -293,6 +320,9 @@ export default defineComponent({
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 400px;
+  width: 100%;
+  padding-bottom: 40px;
 }
 
 .no-data {
@@ -303,6 +333,7 @@ export default defineComponent({
   text-align: center;
   color: #888888;
   font-style: italic;
+  font-family: 'Roboto', sans-serif;
 }
 
 @media (max-width: 767px) {
@@ -313,6 +344,11 @@ export default defineComponent({
   .chart-title {
     font-size: 16px;
     margin-bottom: 10px;
+  }
+
+  .chart-wrapper {
+    min-height: 300px;
+    padding-bottom: 60px;
   }
 }
 </style>

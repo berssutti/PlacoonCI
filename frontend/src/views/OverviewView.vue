@@ -46,7 +46,6 @@
       </v-col>
     </v-row>
 
-    <!-- Gráficos -->
     <v-row class="mt-4">
       <v-col cols="12">
         <v-card elevation="2" class="rounded-lg">
@@ -83,45 +82,45 @@
       </v-col>
     </v-row>
 
-    <!-- Resumo Financeiro -->
     <v-row class="mt-4">
       <v-col cols="12">
-        <v-card elevation="2" class="rounded-lg">
-          <v-card-title class="text-h6">
-            <v-icon class="mr-2">mdi-table</v-icon>
-            Resumo Financeiro
+        <v-card class="mb-4">
+          <v-card-title class="text-h6 primary--text py-4 px-6">
+            <v-icon class="mr-2">mdi-cash-multiple</v-icon>
+            Resumo Financeiro por Área
           </v-card-title>
           <v-card-text>
-            <v-data-table
-              :headers="headers"
-              :items="areasSummary"
-              :items-per-page="5"
-              class="elevation-1"
-            >
-              <template v-slot:item.pending="{ item }">
-                {{ formatCurrency(item.pending) }}
-              </template>
-              <template v-slot:item.completed="{ item }">
-                {{ formatCurrency(item.completed) }}
-              </template>
-              <template v-slot:item.balance="{ item }">
-                <span :class="item.balance >= 0 ? 'success--text' : 'error--text'">
-                  {{ formatCurrency(item.balance) }}
-                </span>
-              </template>
-              <template v-slot:item.progress="{ item }">
-                <v-progress-linear
-                  :value="(item.completed / item.pending) * 100"
-                  height="25"
-                  rounded
-                  :color="getProgressColor((item.completed / item.pending) * 100)"
-                >
-                  <template v-slot:default="{ value }">
-                    <strong>{{ Math.round(value) }}%</strong>
-                  </template>
-                </v-progress-linear>
-              </template>
-            </v-data-table>
+            <v-table class="elevation-1">
+              <thead>
+                <tr>
+                  <th v-for="header in headers" :key="header.key" :class="header.align">
+                    {{ header.title }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="area in areasSummary" :key="area.name">
+                  <td>{{ area.name }}</td>
+                  <td class="text-end">{{ formatCurrency(area.budget) }}</td>
+                  <td class="text-end">{{ formatCurrency(area.executed) }}</td>
+                  <td class="text-end">{{ formatCurrency(area.pending) }}</td>
+                  <td class="text-end">{{ formatCurrency(area.overdue) }}</td>
+                  <td class="text-center">
+                    <v-progress-linear
+                      :model-value="area.progress"
+                      :color="getProgressColor(area.progress)"
+                      height="20"
+                      rounded
+                      striped
+                    >
+                      <template v-slot:default="{ value }">
+                        <strong>{{ Math.ceil(value) }}%</strong>
+                      </template>
+                    </v-progress-linear>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
           </v-card-text>
         </v-card>
       </v-col>
@@ -136,6 +135,7 @@ import { useInstallments } from "@/composables/useInstallments";
 import BarChart from "@/components/shared/charts/BarChart.vue";
 import LineChart from "@/components/shared/charts/LineChart.vue";
 import DoughnutChart from "@/components/shared/charts/DoughnutChart.vue";
+import StatusDistributionChart from "@/components/shared/charts/StatusDistributionChart.vue";
 
 export default {
   name: "OverviewView",
@@ -143,19 +143,21 @@ export default {
     BarChart,
     LineChart,
     DoughnutChart,
+    StatusDistributionChart,
   },
   setup() {
     const { project, fetchProject } = useProject();
     const { installments, fetchInstallments } = useInstallments();
     const allInstallments = ref([]);
     const areasSummary = ref([]);
-    const selectedGraph = ref('completed');
+    const selectedGraph = ref('status');
     const headers = [
-      { text: "Área", value: "name", align: "start" },
-      { text: "Valor Alocado", value: "pending", align: "end" },
-      { text: "Valor Executado", value: "completed", align: "end" },
-      { text: "Saldo", value: "balance", align: "end" },
-      { text: "Progresso", value: "progress", align: "center" },
+      { title: "Área", key: "name", align: "start" },
+      { title: "Orçamento", key: "budget", align: "end" },
+      { title: "Executado", key: "executed", align: "end" },
+      { title: "Pendente", key: "pending", align: "end" },
+      { title: "Atrasado", key: "overdue", align: "end" },
+      { title: "Progresso", key: "progress", align: "center" },
     ];
 
     const totalBudget = computed(() => {
@@ -181,14 +183,14 @@ export default {
     const completedAreasSummary = computed(() => {
       return areasSummary.value.map(area => ({
         name: area.name,
-        value: area.completed
+        value: area.executed
       })).filter(area => area.value > 0);
     });
 
     const pendingAreasSummary = computed(() => {
       return areasSummary.value.map(area => ({
         name: area.name,
-        value: area.pending - area.completed
+        value: area.pending
       })).filter(area => area.value > 0);
     });
 
@@ -229,52 +231,40 @@ export default {
 
     const graphs = [
       {
-        id: 'completed',
-        name: 'Parcelas Quitadas',
-        icon: 'mdi-check-circle-outline',
-        component: 'doughnut-chart',
-        props: { areasSummary: completedAreasSummary },
-        title: 'Distribuição de Parcelas Quitadas',
-        subtitle: 'Por área de investimento'
-      },
+        id: 'status',
+        name: 'Estados das Parcelas por Área',
+        icon: 'mdi-chart-bar-stacked',
+        component: 'status-distribution-chart',
+        props: { 
+          installments: allInstallments,
+          graphTitle: 'Distribuição de Estados das Parcelas por Área'
+        },
+        title: 'Distribuição de Estados das Parcelas por Área',
+        subtitle: 'Estados das parcelas por área de investimento'
+      },  
       {
-        id: 'pending',
-        name: 'Parcelas Pendentes',
-        icon: 'mdi-clock-outline',
-        component: 'doughnut-chart',
-        props: { areasSummary: pendingAreasSummary },
-        title: 'Distribuição de Parcelas Pendentes',
-        subtitle: 'Por área de investimento'
-      },
-      {
-        id: 'overdue',
-        name: 'Parcelas Atrasadas',
-        icon: 'mdi-alert-circle-outline',
-        component: 'doughnut-chart',
-        props: { areasSummary: overdueAreasSummary },
-        title: 'Distribuição de Parcelas Atrasadas',
-        subtitle: 'Por área de investimento'
+        id: 'area_distribution',
+        name: 'Distribuição de Ressarcimentos por Área',
+        icon: 'mdi-chart-bar',
+        component: 'bar-chart',
+        props: { 
+          installments: allInstallments,
+          graphTitle: 'Distribuição de Ressarcimentos por Área'
+        },
+        title: 'Distribuição de Ressarcimentos por Área',
+        subtitle: 'Valores executados por área de investimento'
       },
       {
         id: 'evolution',
-        name: 'Evolução',
+        name: 'Evolução do Ressarcimento Executado',
         icon: 'mdi-chart-line',
         component: 'line-chart',
         props: { 
           installments: allInstallments,
-          graphTitle: 'Evolução do Orçamento Executado'
+          graphTitle: 'Evolução dos Ressarcimentos Executados'
         },
-        title: 'Evolução do Orçamento Executado',
-        subtitle: 'Últimos 12 meses'
-      },
-      {
-        id: 'status',
-        name: 'Status',
-        icon: 'mdi-chart-bar',
-        component: 'bar-chart',
-        props: { installments: allInstallments },
-        title: 'Status dos Projetos',
-        subtitle: 'Por fase de execução'
+        title: 'Evolução dos Ressarcimentos Executados',
+        subtitle: ''
       }
     ];
 
@@ -353,22 +343,34 @@ export default {
           if (!summary[area]) {
             summary[area] = {
               name: area,
+              budget: 0,
+              executed: 0,
               pending: 0,
-              completed: 0,
-              balance: 0,
+              overdue: 0,
+              progress: 0
             };
           }
 
-          summary[area].pending += value;
+          // Adiciona ao orçamento total
+          summary[area].budget += value;
           
+          // Se a parcela foi executada, adiciona ao valor executado
           if (installment.effective_date) {
-            summary[area].completed += value;
+            summary[area].executed += value;
+          }
+
+          // Se a parcela está atrasada, adiciona ao valor atrasado
+          if (installment.status === 'Atrasada') {
+            summary[area].overdue += value;
           }
         });
       });
 
+      // Calcular valores pendentes e progresso para cada área
       Object.values(summary).forEach((area) => {
-        area.balance = area.pending - area.completed;
+        // O valor pendente é o orçamento menos o executado e menos o atrasado
+        area.pending = area.budget - area.executed - area.overdue;
+        area.progress = area.budget > 0 ? (area.executed / area.budget) * 100 : 0;
       });
 
       areasSummary.value = Object.values(summary);
@@ -424,5 +426,37 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.v-table {
+  background-color: #ffffff;
+}
+
+.v-table thead th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  color: #333333;
+  font-family: 'Roboto', sans-serif;
+  padding: 12px 16px;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+}
+
+.v-table tbody td {
+  padding: 12px 16px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.v-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.text-end {
+  text-align: end;
+}
+
+.text-center {
+  text-align: center;
 }
 </style>
