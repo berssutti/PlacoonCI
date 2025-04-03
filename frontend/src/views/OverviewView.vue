@@ -1,71 +1,80 @@
 <template>
-  <v-container>
+  <v-container fluid>
     <v-row>
       <v-col cols="12">
         <v-card elevation="2" class="rounded-lg">
-          <v-card-title class="text-h4 primary--text py-4 px-6">
-            <v-icon large class="mr-2">mdi-chart-donut</v-icon>
-            Visão Geral dos Ressarcimentos
+          <v-card-title class="d-flex flex-wrap align-center py-4 px-6">
+            <v-icon size="large" class="mr-2 mb-1 mb-sm-0">mdi-chart-donut</v-icon>
+            <span class="text-h4 text-sm-h4 text-md-h4 primary--text">Visão Geral dos Ressarcimentos</span>
           </v-card-title>
         </v-card>
       </v-col>
     </v-row>
 
+    <!-- Cards indicadores principais - responsivos em mobile -->
     <v-row class="mt-4">
-      <v-col cols="12" md="3">
+      <v-col cols="12" sm="6" md="3">
         <v-card elevation="2" class="rounded-lg h-100" color="primary" dark>
-          <v-card-text class="text-center d-flex flex-column justify-center h-100">
-            <div class="text-h6 mb-2">Ressarcimento Total Esperado</div>
-            <div class="text-h4">{{ formatCurrency(totalBudget) }}</div>
+          <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
+            <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Total Esperado</div>
+            <div class="text-h5 text-sm-h4">{{ formatCurrency(totalBudget) }}</div>
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="12" md="3">
+      <v-col cols="12" sm="6" md="3">
         <v-card elevation="2" class="rounded-lg h-100" color="success" dark>
-          <v-card-text class="text-center d-flex flex-column justify-center h-100">
-            <div class="text-h6 mb-2">Ressarcimento Executado</div>
-            <div class="text-h4">{{ formatCurrency(totalExecuted) }}</div>
+          <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
+            <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Executado</div>
+            <div class="text-h5 text-sm-h4">{{ formatCurrency(totalExecuted) }}</div>
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="12" md="3">
+      <v-col cols="12" sm="6" md="3">
         <v-card elevation="2" class="rounded-lg h-100" color="warning" dark>
-          <v-card-text class="text-center d-flex flex-column justify-center h-100">
-            <div class="text-h6 mb-2">Ressarcimento Pendente</div>
-            <div class="text-h4">{{ formatCurrency(totalPending) }}</div>
+          <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
+            <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Pendente</div>
+            <div class="text-h5 text-sm-h4">{{ formatCurrency(totalPending) }}</div>
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="12" md="3">
+      <v-col cols="12" sm="6" md="3">
         <v-card elevation="2" class="rounded-lg h-100" color="error" dark>
-          <v-card-text class="text-center d-flex flex-column justify-center h-100">
-            <div class="text-h6 mb-2">Ressarcimento Atrasado</div>
-            <div class="text-h4">{{ formatCurrency(totalOverdue) }}</div>
+          <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
+            <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Atrasado</div>
+            <div class="text-h5 text-sm-h4">{{ formatCurrency(totalOverdue) }}</div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
+    <!-- Seção de gráficos - responsiva -->
     <v-row class="mt-4">
       <v-col cols="12">
         <v-card elevation="2" class="rounded-lg">
-          <v-card-title class="text-h6">
-            <v-icon class="mr-2">{{ getSelectedGraphIcon }}</v-icon>
+          <v-card-title class="text-subtitle-1 text-sm-h6">
+            <v-icon size="small" size-sm="default" class="mr-2">{{ getSelectedGraphIcon }}</v-icon>
             {{ getSelectedGraphTitle }}
           </v-card-title>
           <v-card-subtitle class="pb-0">{{ getSelectedGraphSubtitle }}</v-card-subtitle>
           <v-card-text>
             <v-row>
-              <v-col cols="12" class="d-flex justify-center mb-4">
-                <v-btn-group>
+              <v-col cols="12" class="d-flex justify-center mb-2 mb-sm-4">
+                <v-btn-group class="flex-wrap">
                   <v-btn
                     v-for="graph in graphs"
                     :key="graph.id"
                     :color="selectedGraph === graph.id ? 'primary' : ''"
                     @click="selectedGraph = graph.id"
+                    class="ma-1"
+                    variant="outlined"
+                    size="x-small"
+                    size-sm="small"
+                    density="compact"
+                    density-sm="default"
                   >
-                    <v-icon left>{{ graph.icon }}</v-icon>
-                    {{ graph.name }}
+                    <v-icon size="x-small" size-sm="small" class="mr-0 mr-sm-1">{{ graph.icon }}</v-icon>
+                    <span class="d-none d-sm-inline">{{ graph.name }}</span>
+                    <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) + '...' }}</span>
                   </v-btn>
                 </v-btn-group>
               </v-col>
@@ -73,7 +82,7 @@
                 <component
                   :is="getSelectedGraphComponent"
                   v-bind="getSelectedGraphProps"
-                  :height="400"
+                  :height="chartHeight"
                 />
               </v-col>
             </v-row>
@@ -82,45 +91,49 @@
       </v-col>
     </v-row>
 
+    <!-- Tabela de resumo - com rolagem horizontal em telas menores -->
     <v-row class="mt-4">
       <v-col cols="12">
         <v-card class="mb-4">
-          <v-card-title class="text-h6 primary--text py-4 px-6">
-            <v-icon class="mr-2">mdi-cash-multiple</v-icon>
+          <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
+            <v-icon size="small" size-sm="default" class="mr-2">mdi-cash-multiple</v-icon>
             Resumo Financeiro por Área
           </v-card-title>
-          <v-card-text>
-            <v-table class="elevation-1">
-              <thead>
-                <tr>
-                  <th v-for="header in headers" :key="header.key" :class="header.align">
-                    {{ header.title }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="area in areasSummary" :key="area.name">
-                  <td>{{ area.name }}</td>
-                  <td class="text-end">{{ formatCurrency(area.budget) }}</td>
-                  <td class="text-end">{{ formatCurrency(area.executed) }}</td>
-                  <td class="text-end">{{ formatCurrency(area.pending) }}</td>
-                  <td class="text-end">{{ formatCurrency(area.overdue) }}</td>
-                  <td class="text-center">
-                    <v-progress-linear
-                      :model-value="area.progress"
-                      :color="getProgressColor(area.progress)"
-                      height="20"
-                      rounded
-                      striped
-                    >
-                      <template v-slot:default="{ value }">
-                        <strong>{{ Math.ceil(value) }}%</strong>
-                      </template>
-                    </v-progress-linear>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
+          <v-card-text class="pa-1 pa-sm-3">
+            <div class="table-responsive">
+              <v-table class="elevation-1" density="compact" density-sm="default">
+                <thead>
+                  <tr>
+                    <th v-for="header in headers" :key="header.key" :class="header.align">
+                      {{ header.title }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="area in areasSummary" :key="area.name">
+                    <td>{{ area.name }}</td>
+                    <td class="text-end">{{ formatCurrency(area.budget) }}</td>
+                    <td class="text-end">{{ formatCurrency(area.executed) }}</td>
+                    <td class="text-end">{{ formatCurrency(area.pending) }}</td>
+                    <td class="text-end">{{ formatCurrency(area.overdue) }}</td>
+                    <td class="text-center">
+                      <v-progress-linear
+                        :model-value="area.progress"
+                        :color="getProgressColor(area.progress)"
+                        height="16"
+                        height-sm="20"
+                        rounded
+                        striped
+                      >
+                        <template v-slot:default="{ value }">
+                          <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
+                        </template>
+                      </v-progress-linear>
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -129,13 +142,14 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useProject } from "@/composables/useProject";
 import { useInstallments } from "@/composables/useInstallments";
 import BarChart from "@/components/shared/charts/BarChart.vue";
 import LineChart from "@/components/shared/charts/LineChart.vue";
 import DoughnutChart from "@/components/shared/charts/DoughnutChart.vue";
 import StatusDistributionChart from "@/components/shared/charts/StatusDistributionChart.vue";
+import GroupedBarChart from "@/components/shared/charts/GroupedBarChart.vue";
 
 export default {
   name: "OverviewView",
@@ -144,6 +158,7 @@ export default {
     LineChart,
     DoughnutChart,
     StatusDistributionChart,
+    GroupedBarChart,
   },
   setup() {
     const { project, fetchProject } = useProject();
@@ -151,6 +166,9 @@ export default {
     const allInstallments = ref([]);
     const areasSummary = ref([]);
     const selectedGraph = ref('status');
+    const windowWidth = ref(window.innerWidth);
+    const chartHeight = ref(getChartHeight());
+
     const headers = [
       { title: "Área", key: "name", align: "start" },
       { title: "Orçamento", key: "budget", align: "end" },
@@ -159,6 +177,23 @@ export default {
       { title: "Atrasado", key: "overdue", align: "end" },
       { title: "Progresso", key: "progress", align: "center" },
     ];
+
+    // Responsividade para altura do gráfico
+    function getChartHeight() {
+      if (window.innerWidth < 600) return 250;
+      if (window.innerWidth < 960) return 300;
+      return 400;
+    }
+
+    // Monitor de redimensionamento da janela
+    function handleResize() {
+      windowWidth.value = window.innerWidth;
+      chartHeight.value = getChartHeight();
+    }
+
+    onMounted(() => {
+      window.addEventListener('resize', handleResize);
+    });
 
     const totalBudget = computed(() => {
       return project.value ? project.value.reduce((total, proj) => total + proj.total_compensation_expected, 0) : 0;
@@ -220,6 +255,7 @@ export default {
       return new Intl.NumberFormat("pt-BR", {
         style: "currency",
         currency: "BRL",
+        maximumFractionDigits: windowWidth.value < 600 ? 0 : 2, // Simplifica a visualização em telas pequenas
       }).format(value);
     };
 
@@ -233,6 +269,7 @@ export default {
       {
         id: 'status',
         name: 'Estados das Parcelas por Área',
+        shortName: 'Est',
         icon: 'mdi-chart-bar-stacked',
         component: 'status-distribution-chart',
         props: { 
@@ -241,10 +278,24 @@ export default {
         },
         title: 'Distribuição de Estados das Parcelas por Área',
         subtitle: 'Estados das parcelas por área de investimento'
-      },  
+      },
+      {
+        id: 'grouped_bar',
+        name: 'Ressarcimentos por Projeto',
+        shortName: 'Proj',
+        icon: 'mdi-chart-bar',
+        component: 'grouped-bar-chart',
+        props: { 
+          projects: project,
+          graphTitle: 'Ressarcimentos por Projeto'
+        },
+        title: 'Ressarcimentos por Projeto',
+        subtitle: 'Distribuição de valores por projeto'
+      },
       {
         id: 'area_distribution',
         name: 'Distribuição de Ressarcimentos por Área',
+        shortName: 'Área',
         icon: 'mdi-chart-bar',
         component: 'bar-chart',
         props: { 
@@ -257,6 +308,7 @@ export default {
       {
         id: 'evolution',
         name: 'Evolução do Ressarcimento Executado',
+        shortName: 'Evol',
         icon: 'mdi-chart-line',
         component: 'line-chart',
         props: { 
@@ -285,6 +337,11 @@ export default {
           props[key] = value;
         }
       });
+      
+      // Adiciona propriedades responsivas ao gráfico
+      props.responsive = true;
+      props.maintainAspectRatio = false;
+      
       return props;
     });
 
@@ -396,7 +453,9 @@ export default {
       getSelectedGraphProps,
       getSelectedGraphTitle,
       getSelectedGraphSubtitle,
-      getSelectedGraphIcon
+      getSelectedGraphIcon,
+      chartHeight,
+      windowWidth
     };
   },
 };
@@ -422,7 +481,6 @@ export default {
 }
 
 .v-card-text {
-  min-height: 120px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -437,14 +495,11 @@ export default {
   font-weight: 600;
   color: #333333;
   font-family: 'Roboto', sans-serif;
-  padding: 12px 16px;
   text-transform: uppercase;
-  font-size: 0.875rem;
   letter-spacing: 0.5px;
 }
 
 .v-table tbody td {
-  padding: 12px 16px;
   font-family: 'Roboto', sans-serif;
 }
 
@@ -458,5 +513,47 @@ export default {
 
 .text-center {
   text-align: center;
+}
+
+/* Responsividade da tabela */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 599px) {
+  .v-btn-group {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .v-card-title {
+    font-size: 1.25rem !important;
+  }
+  
+  .v-table {
+    font-size: 0.75rem;
+  }
+  
+  .v-table thead th {
+    padding: 8px !important;
+    font-size: 0.7rem;
+  }
+  
+  .v-table tbody td {
+    padding: 6px !important;
+  }
+}
+
+/* Melhorias para iPad/tablets */
+@media (min-width: 600px) and (max-width: 959px) {
+  .v-table thead th {
+    padding: 10px !important;
+  }
+  
+  .v-table tbody td {
+    padding: 8px !important;
+  }
 }
 </style>
