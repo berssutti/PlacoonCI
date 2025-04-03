@@ -4,8 +4,21 @@
       <v-col cols="12">
         <v-card elevation="2" class="rounded-lg">
           <v-card-title class="d-flex flex-wrap align-center py-4 px-6">
-            <v-icon size="large" class="mr-2 mb-1 mb-sm-0">mdi-chart-donut</v-icon>
-            <span class="text-h4 text-sm-h4 text-md-h4 primary--text">Visão Geral dos Ressarcimentos</span>
+            <div class="d-flex align-center">
+              <v-icon size="large" class="mr-2">mdi-chart-donut</v-icon>
+              <span class="text-h4 text-sm-h4 text-md-h4 primary--text">Visão Geral dos Ressarcimentos</span>
+            </div>
+            <v-spacer></v-spacer>
+            <v-select
+              v-model="selectedYear"
+              :items="availableYears"
+              label="Ano"
+              class="mt-2 mt-sm-0 align-self-center"
+              style="max-width: 150px;"
+              density="compact"
+              variant="outlined"
+              @update:model-value="handleYearChange"
+            ></v-select>
           </v-card-title>
         </v-card>
       </v-col>
@@ -168,6 +181,8 @@ export default {
     const selectedGraph = ref('status');
     const windowWidth = ref(window.innerWidth);
     const chartHeight = ref(getChartHeight());
+    const selectedYear = ref(new Date().getFullYear());
+    const availableYears = ref([]);
 
     const headers = [
       { title: "Área", key: "name", align: "start" },
@@ -177,6 +192,38 @@ export default {
       { title: "Atrasado", key: "overdue", align: "end" },
       { title: "Progresso", key: "progress", align: "center" },
     ];
+
+    const updateAvailableYears = (projects) => {
+      if (!projects || projects.length === 0) {
+        availableYears.value = [new Date().getFullYear()];
+        return;
+      }
+
+      // Extrair todos os anos únicos dos projetos
+      const years = new Set();
+      projects.forEach(project => {
+        const startYear = new Date(project.start_date).getFullYear();
+        const endYear = new Date(project.end_date).getFullYear();
+        
+        // Adicionar todos os anos entre o início e o fim do projeto
+        for (let year = startYear; year <= endYear; year++) {
+          years.add(year);
+        }
+      });
+
+      // Converter para array e ordenar em ordem decrescente
+      availableYears.value = Array.from(years).sort((a, b) => b - a);
+      
+      // Se o ano selecionado não estiver mais na lista, selecionar o ano mais recente
+      if (!availableYears.value.includes(selectedYear.value)) {
+        selectedYear.value = availableYears.value[0];
+      }
+    };
+
+    const handleYearChange = async () => {
+      await fetchProject(null, selectedYear.value);
+      await loadInstallments();
+    };
 
     // Responsividade para altura do gráfico
     function getChartHeight() {
@@ -362,31 +409,40 @@ export default {
 
     onMounted(async () => {
       try {
+        // Primeiro, buscar todos os projetos sem filtro para obter os anos disponíveis
         await fetchProject();
-        const allInstallmentsData = [];
-
-        if (project.value && project.value.length > 0) {
-          for (const proj of project.value) {
-            await fetchInstallments(proj.id);
-            if (installments.value && installments.value.length > 0) {
-              allInstallmentsData.push(...installments.value);
-            }
-          }
-        }
-
-        // Ordenar as parcelas por data
-        allInstallmentsData.sort((a, b) => {
-          const dateA = new Date(a.effective_date || a.estimated_date);
-          const dateB = new Date(b.effective_date || b.estimated_date);
-          return dateA - dateB;
-        });
-
-        allInstallments.value = allInstallmentsData;
-        calculateAreasSummary();
+        updateAvailableYears(project.value);
+        
+        // Depois, buscar os projetos do ano selecionado
+        await fetchProject(null, selectedYear.value);
+        await loadInstallments();
       } catch (error) {
         console.error('Error loading data:', error);
       }
     });
+
+    const loadInstallments = async () => {
+      const allInstallmentsData = [];
+
+      if (project.value && project.value.length > 0) {
+        for (const proj of project.value) {
+          await fetchInstallments(proj.id);
+          if (installments.value && installments.value.length > 0) {
+            allInstallmentsData.push(...installments.value);
+          }
+        }
+      }
+
+      // Ordenar as parcelas por data
+      allInstallmentsData.sort((a, b) => {
+        const dateA = new Date(a.effective_date || a.estimated_date);
+        const dateB = new Date(b.effective_date || b.estimated_date);
+        return dateA - dateB;
+      });
+
+      allInstallments.value = allInstallmentsData;
+      calculateAreasSummary();
+    };
 
     const calculateAreasSummary = () => {
       const summary = {};
@@ -455,7 +511,10 @@ export default {
       getSelectedGraphSubtitle,
       getSelectedGraphIcon,
       chartHeight,
-      windowWidth
+      windowWidth,
+      selectedYear,
+      availableYears,
+      handleYearChange
     };
   },
 };

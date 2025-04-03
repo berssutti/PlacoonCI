@@ -1,8 +1,12 @@
 import api from './api';
 
 export const projectService = {
-    getAllProjects() {
-        return api.get('/projects/');
+    getAllProjects(year = null) {
+        const params = {};
+        if (year) {
+            params.active_year = year;
+        }
+        return api.get('/projects/', { params });
     },
 
     getProject(id) {
