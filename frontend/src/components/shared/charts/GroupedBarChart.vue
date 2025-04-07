@@ -185,6 +185,7 @@ export default defineComponent({
           backgroundColor: colors.total,
           borderColor: '#ffffff',
           borderWidth: 2,
+          borderRadius: 8,
         },
         {
           label: 'Ressarcimento Executado',
@@ -192,6 +193,7 @@ export default defineComponent({
           backgroundColor: colors.executed,
           borderColor: '#ffffff',
           borderWidth: 2,
+          borderRadius: 8,
         },
         {
           label: 'Ressarcimento Atrasado',
@@ -199,6 +201,7 @@ export default defineComponent({
           backgroundColor: colors.overdue,
           borderColor: '#ffffff',
           borderWidth: 2,
+          borderRadius: 8,
         },
         {
           label: 'Ressarcimento Pendente',
@@ -206,6 +209,7 @@ export default defineComponent({
           backgroundColor: colors.pending,
           borderColor: '#ffffff',
           borderWidth: 2,
+          borderRadius: 8,
         }
       ];
 

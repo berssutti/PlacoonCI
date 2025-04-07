@@ -41,4 +41,20 @@ class InstallmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         project_id = self.kwargs.get('project_pk')
-        return Installment.objects.filter(project_id=project_id).order_by('estimated_date')
+        queryset = Installment.objects.filter(project_id=project_id)
+        
+        year = self.request.query_params.get('year', None)
+        if year:
+            try:
+                year = int(year)
+                start_of_year = datetime(year, 1, 1)
+                end_of_year = datetime(year, 12, 31)
+                queryset = queryset.filter(
+                    estimated_date__gte=start_of_year,
+                    estimated_date__lte=end_of_year
+                )
+            except ValueError:
+                # If year is not a valid integer, return all installments
+                pass
+                
+        return queryset.order_by('estimated_date')

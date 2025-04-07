@@ -192,6 +192,7 @@ export default defineComponent({
           backgroundColor: colors['Quitada'],
           borderColor: '#ffffff',
           borderWidth: 2,
+          borderRadius: 8,
         },
         {
           label: 'Pendente',
@@ -199,6 +200,7 @@ export default defineComponent({
           backgroundColor: colors['Pendente'],
           borderColor: '#ffffff',
           borderWidth: 2,
+          borderRadius: 8,
         },
         {
           label: 'Atrasada',
@@ -206,6 +208,7 @@ export default defineComponent({
           backgroundColor: colors['Atrasada'],
           borderColor: '#ffffff',
           borderWidth: 2,
+          borderRadius: 8,
         }
       ];
 

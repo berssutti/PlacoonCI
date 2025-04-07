@@ -169,6 +169,7 @@ export default defineComponent({
           backgroundColor: color,
           borderColor: '#ffffff',
           borderWidth: 2,
+          borderRadius: 8,
         };
       });
 

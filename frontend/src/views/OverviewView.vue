@@ -24,7 +24,6 @@
       </v-col>
     </v-row>
 
-    <!-- Cards indicadores principais - responsivos em mobile -->
     <v-row class="mt-4">
       <v-col cols="12" sm="6" md="3">
         <v-card elevation="2" class="rounded-lg h-100" color="primary" dark>
@@ -60,7 +59,6 @@
       </v-col>
     </v-row>
 
-    <!-- Seção de gráficos - responsiva -->
     <v-row class="mt-4">
       <v-col cols="12">
         <v-card elevation="2" class="rounded-lg">
@@ -104,7 +102,6 @@
       </v-col>
     </v-row>
 
-    <!-- Tabela de resumo - com rolagem horizontal em telas menores -->
     <v-row class="mt-4">
       <v-col cols="12">
         <v-card class="mb-4">
@@ -151,6 +148,118 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-row class="mt-4">
+      <v-col cols="12">
+        <v-card class="mb-4">
+          <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
+            <v-icon size="small" size-sm="default" class="mr-2">mdi-chart-timeline-variant</v-icon>
+            Detalhamento Financeiro
+          </v-card-title>
+          <v-card-text class="pa-1 pa-sm-3">
+            <v-tabs v-model="activeTab" color="primary">
+              <v-tab value="institution">Instituição</v-tab>
+              <v-tab value="destination">Destinação</v-tab>
+              <v-tab value="areas">Áreas</v-tab>
+            </v-tabs>
+
+            <v-window v-model="activeTab">
+              <v-window-item value="institution">
+                <v-card flat class="mt-4">
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12" md="6">
+                        <v-card outlined class="pa-4">
+                          <div class="text-subtitle-1 font-weight-bold mb-2">Total Recebido por Instituição</div>
+                          <v-list>
+                            <v-list-item v-for="(amount, institution) in institutionSummary" :key="institution">
+                              <v-list-item-title>{{ institution }}</v-list-item-title>
+                              <template v-slot:append>
+                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
+                              </template>
+                            </v-list-item>
+                          </v-list>
+                        </v-card>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-card outlined class="pa-4">
+                          <div class="text-subtitle-1 font-weight-bold mb-2">Distribuição por Ano</div>
+                          <v-list>
+                            <v-list-item v-for="(amount, year) in yearSummary" :key="year">
+                              <v-list-item-title>{{ year }}</v-list-item-title>
+                              <template v-slot:append>
+                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
+                              </template>
+                            </v-list-item>
+                          </v-list>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+
+              <v-window-item value="destination">
+                <v-card flat class="mt-4">
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12">
+                        <v-card outlined class="pa-4">
+                          <div class="text-subtitle-1 font-weight-bold mb-2">Destinação dos Recursos</div>
+                          <v-list>
+                            <v-list-item v-for="(amount, destination) in destinationSummary" :key="destination">
+                              <v-list-item-title>{{ destination }}</v-list-item-title>
+                              <template v-slot:append>
+                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
+                              </template>
+                            </v-list-item>
+                          </v-list>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+
+              <v-window-item value="areas">
+                <v-card flat class="mt-4">
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12" md="6">
+                        <v-card outlined class="pa-4">
+                          <div class="text-subtitle-1 font-weight-bold mb-2">Distribuição por Área</div>
+                          <v-list>
+                            <v-list-item v-for="area in areasSummary" :key="area.name">
+                              <v-list-item-title>{{ area.name }}</v-list-item-title>
+                              <template v-slot:append>
+                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.budget) }}</span>
+                              </template>
+                            </v-list-item>
+                          </v-list>
+                        </v-card>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-card outlined class="pa-4">
+                          <div class="text-subtitle-1 font-weight-bold mb-2">Execução por Área</div>
+                          <v-list>
+                            <v-list-item v-for="area in areasSummary" :key="area.name">
+                              <v-list-item-title>{{ area.name }}</v-list-item-title>
+                              <template v-slot:append>
+                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.executed) }}</span>
+                              </template>
+                            </v-list-item>
+                          </v-list>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+            </v-window>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -183,6 +292,7 @@ export default {
     const chartHeight = ref(getChartHeight());
     const selectedYear = ref(new Date().getFullYear());
     const availableYears = ref([]);
+    const activeTab = ref('institution');
 
     const headers = [
       { title: "Área", key: "name", align: "start" },
@@ -199,22 +309,18 @@ export default {
         return;
       }
 
-      // Extrair todos os anos únicos dos projetos
       const years = new Set();
       projects.forEach(project => {
         const startYear = new Date(project.start_date).getFullYear();
         const endYear = new Date(project.end_date).getFullYear();
         
-        // Adicionar todos os anos entre o início e o fim do projeto
         for (let year = startYear; year <= endYear; year++) {
           years.add(year);
         }
       });
 
-      // Converter para array e ordenar em ordem decrescente
       availableYears.value = Array.from(years).sort((a, b) => b - a);
       
-      // Se o ano selecionado não estiver mais na lista, selecionar o ano mais recente
       if (!availableYears.value.includes(selectedYear.value)) {
         selectedYear.value = availableYears.value[0];
       }
@@ -225,14 +331,12 @@ export default {
       await loadInstallments();
     };
 
-    // Responsividade para altura do gráfico
     function getChartHeight() {
       if (window.innerWidth < 600) return 250;
       if (window.innerWidth < 960) return 300;
       return 400;
     }
 
-    // Monitor de redimensionamento da janela
     function handleResize() {
       windowWidth.value = window.innerWidth;
       chartHeight.value = getChartHeight();
@@ -283,7 +387,7 @@ export default {
 
       allInstallments.value.forEach((installment) => {
         if (!installment.area_values || installment.status !== 'Atrasada') return;
-        
+
         Object.entries(installment.area_values).forEach(([area, value]) => {
           if (!summary[area]) {
             summary[area] = 0;
@@ -302,7 +406,7 @@ export default {
       return new Intl.NumberFormat("pt-BR", {
         style: "currency",
         currency: "BRL",
-        maximumFractionDigits: windowWidth.value < 600 ? 0 : 2, // Simplifica a visualização em telas pequenas
+        maximumFractionDigits: windowWidth.value < 600 ? 0 : 2,
       }).format(value);
     };
 
@@ -334,7 +438,7 @@ export default {
         component: 'grouped-bar-chart',
         props: { 
           projects: project,
-          graphTitle: 'Ressarcimentos por Projeto'
+          graphTitle: 'Valores dos Ressarcimentos por Projeto'
         },
         title: 'Ressarcimentos por Projeto',
         subtitle: 'Distribuição de valores por projeto'
@@ -385,7 +489,6 @@ export default {
         }
       });
       
-      // Adiciona propriedades responsivas ao gráfico
       props.responsive = true;
       props.maintainAspectRatio = false;
       
@@ -409,11 +512,9 @@ export default {
 
     onMounted(async () => {
       try {
-        // Primeiro, buscar todos os projetos sem filtro para obter os anos disponíveis
         await fetchProject();
         updateAvailableYears(project.value);
         
-        // Depois, buscar os projetos do ano selecionado
         await fetchProject(null, selectedYear.value);
         await loadInstallments();
       } catch (error) {
@@ -433,7 +534,6 @@ export default {
         }
       }
 
-      // Ordenar as parcelas por data
       allInstallmentsData.sort((a, b) => {
         const dateA = new Date(a.effective_date || a.estimated_date);
         const dateB = new Date(b.effective_date || b.estimated_date);
@@ -464,30 +564,70 @@ export default {
             };
           }
 
-          // Adiciona ao orçamento total
           summary[area].budget += value;
           
-          // Se a parcela foi executada, adiciona ao valor executado
           if (installment.effective_date) {
             summary[area].executed += value;
           }
 
-          // Se a parcela está atrasada, adiciona ao valor atrasado
           if (installment.status === 'Atrasada') {
             summary[area].overdue += value;
           }
         });
       });
 
-      // Calcular valores pendentes e progresso para cada área
       Object.values(summary).forEach((area) => {
-        // O valor pendente é o orçamento menos o executado e menos o atrasado
         area.pending = area.budget - area.executed - area.overdue;
         area.progress = area.budget > 0 ? (area.executed / area.budget) * 100 : 0;
       });
 
       areasSummary.value = Object.values(summary);
     };
+
+    const institutionSummary = computed(() => {
+      const summary = {};
+      if (!allInstallments.value) return summary;
+      
+      allInstallments.value.forEach(installment => {
+        const institution = 'FCTE';
+        if (!summary[institution]) {
+          summary[institution] = 0;
+        }
+        summary[institution] += installment.amount;
+      });
+      
+      return summary;
+    });
+
+const yearSummary = computed(() => {
+      const summary = {};
+      if (!allInstallments.value) return summary;
+      
+      allInstallments.value.forEach(installment => {
+        const year = new Date(installment.effective_date || installment.estimated_date).getFullYear();
+        if (!summary[year]) {
+          summary[year] = 0;
+        }
+        summary[year] += installment.amount;
+      });
+      
+      return summary;
+    });
+
+    const destinationSummary = computed(() => {
+      const summary = {};
+      if (!allInstallments.value) return summary;
+      
+      allInstallments.value.forEach(installment => {
+        const destination = installment.destination || 'Não especificado';
+        if (!summary[destination]) {
+          summary[destination] = 0;
+        }
+        summary[destination] += installment.amount;
+      });
+      
+      return summary;
+    });
 
     return {
       allInstallments,
@@ -514,7 +654,11 @@ export default {
       windowWidth,
       selectedYear,
       availableYears,
-      handleYearChange
+      handleYearChange,
+      activeTab,
+      institutionSummary,
+      yearSummary,
+      destinationSummary,
     };
   },
 };
@@ -574,7 +718,6 @@ export default {
   text-align: center;
 }
 
-/* Responsividade da tabela */
 .table-responsive {
   width: 100%;
   overflow-x: auto;
@@ -605,7 +748,6 @@ export default {
   }
 }
 
-/* Melhorias para iPad/tablets */
 @media (min-width: 600px) and (max-width: 959px) {
   .v-table thead th {
     padding: 10px !important;
@@ -614,5 +756,18 @@ export default {
   .v-table tbody td {
     padding: 8px !important;
   }
+}
+
+.v-list-item {
+  border-bottom: 1px solid #eee;
+}
+
+.v-list-item:last-child {
+  border-bottom: none;
+}
+
+.v-card--outlined {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
 }
 </style>
