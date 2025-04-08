@@ -160,7 +160,6 @@ export default defineComponent({
       const sortedAreas = Array.from(areaNames).sort((a, b) => areaTotals[b] - areaTotals[a]);
       
       const datasets = sortedAreas.map((area, index) => {
-        // Usar as cores predefinidas, ou usar a paleta de cores do array
         const color = this.areaColors[area] || this.colors[index % this.colors.length];
         
         return {
