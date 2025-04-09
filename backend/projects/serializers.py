@@ -139,3 +139,9 @@ class OverviewSerializer(serializers.Serializer):
         child=serializers.FloatField(),
         allow_empty=True
     )
+    monthly_area_summary = serializers.DictField(
+        child=serializers.DictField(
+            child=serializers.FloatField(),
+            allow_empty=True
+        )
+    )

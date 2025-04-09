@@ -52,57 +52,53 @@ class ProjectViewSet(viewsets.ModelViewSet):
             (Q(end_date__gte=start_of_year) | Q(end_date__isnull=True))
         )
 
-        # Get all installments for these projects with estimated_date in the selected year
+        # Get all installments for these projects with effective_date in the selected year
         installments = Installment.objects.filter(
             project__in=projects,
-            estimated_date__gte=start_of_year,
-            estimated_date__lte=end_of_year
+            effective_date__gte=start_of_year,
+            effective_date__lte=end_of_year,
+            status='Quitada'  # Apenas parcelas quitadas
         )
 
         # Calculate totals based on installments
         total_expected = float(sum(installment.amount or 0 for installment in installments))
         
         # Calculate executed amount (installments with effective_date)
-        total_executed = float(sum(
-            installment.amount or 0 
-            for installment in installments 
-            if installment.effective_date is not None
-        ))
+        total_executed = float(sum(installment.amount or 0 for installment in installments))
         
         # Calculate pending amount (installments without effective_date and not overdue)
-        total_pending = float(sum(
-            installment.amount or 0 
-            for installment in installments 
-            if installment.effective_date is None and installment.status != 'Atrasada'
-        ))
+        pending_installments = Installment.objects.filter(
+            project__in=projects,
+            estimated_date__gte=start_of_year,
+            estimated_date__lte=end_of_year,
+            effective_date__isnull=True,
+            status__in=['Pendente', 'Atrasada']
+        )
+        total_pending = float(sum(installment.amount or 0 for installment in pending_installments))
         
         # Calculate overdue amount (installments with status 'Atrasada')
-        total_overdue = float(sum(
-            installment.amount or 0 
-            for installment in installments 
-            if installment.status == 'Atrasada'
-        ))
+        overdue_installments = Installment.objects.filter(
+            project__in=projects,
+            estimated_date__gte=start_of_year,
+            estimated_date__lte=end_of_year,
+            status='Atrasada'
+        )
+        total_overdue = float(sum(installment.amount or 0 for installment in overdue_installments))
+
+        # Calculate total expected (sum of executed, pending and overdue)
+        total_expected = total_executed + total_pending + total_overdue
 
         # Calculate projects summary
         projects_summary = []
         for project in projects:
             project_installments = installments.filter(project=project)
-            project_expected = float(sum(installment.amount or 0 for installment in project_installments))
-            project_executed = float(sum(
-                installment.amount or 0 
-                for installment in project_installments 
-                if installment.effective_date is not None
-            ))
-            project_pending = float(sum(
-                installment.amount or 0 
-                for installment in project_installments 
-                if installment.effective_date is None and installment.status != 'Atrasada'
-            ))
-            project_overdue = float(sum(
-                installment.amount or 0 
-                for installment in project_installments 
-                if installment.status == 'Atrasada'
-            ))
+            project_pending_installments = pending_installments.filter(project=project)
+            project_overdue_installments = overdue_installments.filter(project=project)
+            
+            project_executed = float(sum(installment.amount or 0 for installment in project_installments))
+            project_pending = float(sum(installment.amount or 0 for installment in project_pending_installments))
+            project_overdue = float(sum(installment.amount or 0 for installment in project_overdue_installments))
+            project_expected = project_executed + project_pending + project_overdue
 
             projects_summary.append({
                 'name': project.name,
@@ -116,6 +112,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         areas_summary = []
         for project in projects:
             project_installments = installments.filter(project=project)
+            project_pending_installments = pending_installments.filter(project=project)
+            project_overdue_installments = overdue_installments.filter(project=project)
             
             for project_area in project.projectarea_set.all():
                 area_name = project_area.area.name
@@ -136,16 +134,20 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 for installment in project_installments:
                     amount = installment.amount or 0
                     area_amount = Decimal(str(amount)) * (project_area.percentage / Decimal('100'))
-                    
-                    area_data['budget'] += float(area_amount)
-                    
-                    if installment.effective_date is not None:
-                        area_data['executed'] += float(area_amount)
-                    elif installment.status == 'Atrasada':
-                        area_data['overdue'] += float(area_amount)
-                    else:
-                        area_data['pending'] += float(area_amount)
+                    area_data['executed'] += float(area_amount)
                 
+                for installment in project_pending_installments:
+                    amount = installment.amount or 0
+                    area_amount = Decimal(str(amount)) * (project_area.percentage / Decimal('100'))
+                    area_data['pending'] += float(area_amount)
+                
+                for installment in project_overdue_installments:
+                    amount = installment.amount or 0
+                    area_amount = Decimal(str(amount)) * (project_area.percentage / Decimal('100'))
+                    area_data['overdue'] += float(area_amount)
+                
+                # Calculate total budget (sum of executed, pending and overdue)
+                area_data['budget'] = area_data['executed'] + area_data['pending'] + area_data['overdue']
                 area_data['progress'] = (area_data['executed'] / area_data['budget'] * 100) if area_data['budget'] > 0 else 0
 
         # Calculate monthly summary
@@ -155,24 +157,63 @@ class ProjectViewSet(viewsets.ModelViewSet):
             month_end = datetime(year, month + 1, 1) if month < 12 else datetime(year + 1, 1, 1)
             month_installments = installments.filter(
                 effective_date__gte=month_start,
-                effective_date__lt=month_end
+                effective_date__lt=month_end,
+                status='Quitada'  # Apenas parcelas quitadas
             )
             monthly_summary[month] = float(sum(installment.amount or 0 for installment in month_installments))
 
+        # Calculate monthly area summary
+        monthly_area_summary = {}
+        for month in range(1, 13):
+            month_start = datetime(year, month, 1)
+            month_end = datetime(year, month + 1, 1) if month < 12 else datetime(year + 1, 1, 1)
+            
+            # Get installments for this month based on effective_date (data de pagamento)
+            month_installments = installments.filter(
+                effective_date__gte=month_start,
+                effective_date__lt=month_end,
+                status='Quitada'  # Apenas parcelas quitadas
+            )
+            
+            # Initialize month data
+            monthly_area_summary[month] = {}
+            
+            # For each project and its areas
+            for project in projects:
+                project_installments = month_installments.filter(project=project)
+                
+                for project_area in project.projectarea_set.all():
+                    area_name = project_area.area.name
+                    
+                    # Calculate area amount for this month
+                    area_amount = sum(
+                        Decimal(str(installment.amount or 0)) * (project_area.percentage / Decimal('100'))
+                        for installment in project_installments
+                    )
+                    
+                    # Add to monthly summary
+                    if area_name not in monthly_area_summary[month]:
+                        monthly_area_summary[month][area_name] = 0
+                    monthly_area_summary[month][area_name] += float(area_amount)
+
         # Calculate institution summary (FCTE)
-        institution_summary = {'FCTE': float(sum(installment.amount or 0 for installment in installments))}
+        executed_installments = installments.filter(
+            effective_date__isnull=False,
+            status='Quitada'
+        )
+        institution_summary = {'FCTE': float(sum(installment.amount or 0 for installment in executed_installments))}
 
         # Calculate year summary
         year_summary = {}
-        for installment in installments:
-            year = installment.estimated_date.year
+        for installment in executed_installments:
+            year = installment.effective_date.year
             if year not in year_summary:
                 year_summary[year] = 0
             year_summary[year] += float(installment.amount or 0)
 
         # Calculate destination summary
         destination_summary = {}
-        for installment in installments:
+        for installment in executed_installments:
             destination = installment.destination or 'Não especificado'
             if destination not in destination_summary:
                 destination_summary[destination] = 0
@@ -188,7 +229,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
             'year_summary': year_summary,
             'destination_summary': destination_summary,
             'projects_summary': projects_summary,
-            'monthly_summary': monthly_summary
+            'monthly_summary': monthly_summary,
+            'monthly_area_summary': monthly_area_summary
         }
 
         serializer = OverviewSerializer(data=data)
