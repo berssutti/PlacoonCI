@@ -24,242 +24,257 @@
       </v-col>
     </v-row>
 
-    <v-row class="mt-4">
-      <v-col cols="12" sm="6" md="3">
-        <v-card elevation="2" class="rounded-lg h-100" color="primary" dark>
-          <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-            <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Total Esperado</div>
-            <div class="text-h5 text-sm-h4">{{ formatCurrency(totalBudget) }}</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="12" sm="6" md="3">
-        <v-card elevation="2" class="rounded-lg h-100" color="success" dark>
-          <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-            <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Executado</div>
-            <div class="text-h5 text-sm-h4">{{ formatCurrency(totalExecuted) }}</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="12" sm="6" md="3">
-        <v-card elevation="2" class="rounded-lg h-100" color="warning" dark>
-          <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-            <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Pendente</div>
-            <div class="text-h5 text-sm-h4">{{ formatCurrency(totalPending) }}</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="12" sm="6" md="3">
-        <v-card elevation="2" class="rounded-lg h-100" color="error" dark>
-          <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-            <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Atrasado</div>
-            <div class="text-h5 text-sm-h4">{{ formatCurrency(totalOverdue) }}</div>
-          </v-card-text>
-        </v-card>
+    <v-row v-if="loading" justify="center" class="mt-4">
+      <v-col cols="12" class="text-center py-6">
+        <v-progress-circular indeterminate size="64" color="primary"></v-progress-circular>
+        <div class="text-h6 grey--text mt-4">Carregando dados...</div>
       </v-col>
     </v-row>
 
-    <v-row class="mt-4">
+    <v-row v-else-if="error" justify="center" class="mt-4">
       <v-col cols="12">
-        <v-card elevation="2" class="rounded-lg">
-          <v-card-title class="text-subtitle-1 text-sm-h6">
-            <v-icon size="small" size-sm="default" class="mr-2">{{ getSelectedGraphIcon }}</v-icon>
-            {{ getSelectedGraphTitle }}
-          </v-card-title>
-          <v-card-subtitle class="pb-0">{{ getSelectedGraphSubtitle }}</v-card-subtitle>
-          <v-card-text>
-            <v-row>
-              <v-col cols="12" class="d-flex justify-center mb-2 mb-sm-4">
-                <v-btn-group class="flex-wrap">
-                  <v-btn
-                    v-for="graph in graphs"
-                    :key="graph.id"
-                    :color="selectedGraph === graph.id ? 'primary' : ''"
-                    @click="selectedGraph = graph.id"
-                    class="ma-1"
-                    variant="outlined"
-                    size="x-small"
-                    size-sm="small"
-                    density="compact"
-                    density-sm="default"
-                  >
-                    <v-icon size="x-small" size-sm="small" class="mr-0 mr-sm-1">{{ graph.icon }}</v-icon>
-                    <span class="d-none d-sm-inline">{{ graph.name }}</span>
-                    <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) + '...' }}</span>
-                  </v-btn>
-                </v-btn-group>
-              </v-col>
-              <v-col cols="12">
-                <component
-                  :is="getSelectedGraphComponent"
-                  v-bind="getSelectedGraphProps"
-                  :height="chartHeight"
-                />
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
+        <v-alert type="error" elevation="2" class="rounded-lg">{{ error }}</v-alert>
       </v-col>
     </v-row>
 
-    <v-row class="mt-4">
-      <v-col cols="12">
-        <v-card class="mb-4">
-          <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
-            <v-icon size="small" size-sm="default" class="mr-2">mdi-cash-multiple</v-icon>
-            Resumo Financeiro por Área
-          </v-card-title>
-          <v-card-text class="pa-1 pa-sm-3">
-            <div class="table-responsive">
-              <v-table class="elevation-1" density="compact" density-sm="default">
-                <thead>
-                  <tr>
-                    <th v-for="header in headers" :key="header.key" :class="header.align">
-                      {{ header.title }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="area in areasSummary" :key="area.name">
-                    <td>{{ area.name }}</td>
-                    <td class="text-end">{{ formatCurrency(area.budget) }}</td>
-                    <td class="text-end">{{ formatCurrency(area.executed) }}</td>
-                    <td class="text-end">{{ formatCurrency(area.pending) }}</td>
-                    <td class="text-end">{{ formatCurrency(area.overdue) }}</td>
-                    <td class="text-center">
-                      <v-progress-linear
-                        :model-value="area.progress"
-                        :color="getProgressColor(area.progress)"
-                        height="16"
-                        height-sm="20"
-                        rounded
-                        striped
-                      >
-                        <template v-slot:default="{ value }">
-                          <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
-                        </template>
-                      </v-progress-linear>
-                    </td>
-                  </tr>
-                </tbody>
-              </v-table>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+    <template v-else>
+      <v-row class="mt-4">
+        <v-col cols="12" sm="6" md="3">
+          <v-card elevation="2" class="rounded-lg h-100" color="primary" dark>
+            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
+              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Total Esperado</div>
+              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalBudget) }}</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6" md="3">
+          <v-card elevation="2" class="rounded-lg h-100" color="success" dark>
+            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
+              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Executado</div>
+              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalExecuted) }}</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6" md="3">
+          <v-card elevation="2" class="rounded-lg h-100" color="warning" dark>
+            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
+              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Pendente</div>
+              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalPending) }}</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6" md="3">
+          <v-card elevation="2" class="rounded-lg h-100" color="error" dark>
+            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
+              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Atrasado</div>
+              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalOverdue) }}</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-    <v-row class="mt-4">
-      <v-col cols="12">
-        <v-card class="mb-4">
-          <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
-            <v-icon size="small" size-sm="default" class="mr-2">mdi-chart-timeline-variant</v-icon>
-            Detalhamento Financeiro
-          </v-card-title>
-          <v-card-text class="pa-1 pa-sm-3">
-            <v-tabs v-model="activeTab" color="primary">
-              <v-tab value="institution">Instituição</v-tab>
-              <v-tab value="destination">Destinação</v-tab>
-              <v-tab value="areas">Áreas</v-tab>
-            </v-tabs>
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card class="mb-4">
+            <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
+              <v-icon size="small" size-sm="default" class="mr-2">mdi-cash-multiple</v-icon>
+              Resumo Financeiro por Área
+            </v-card-title>
+            <v-card-text class="pa-1 pa-sm-3">
+              <div class="table-responsive">
+                <v-table class="elevation-1" density="compact" density-sm="default">
+                  <thead>
+                    <tr>
+                      <th v-for="header in headers" :key="header.key" :class="header.align">
+                        {{ header.title }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="area in areasSummary" :key="area.name">
+                      <td>{{ area.name }}</td>
+                      <td class="text-end">{{ formatCurrency(area.budget) }}</td>
+                      <td class="text-end">{{ formatCurrency(area.executed) }}</td>
+                      <td class="text-end">{{ formatCurrency(area.pending) }}</td>
+                      <td class="text-end">{{ formatCurrency(area.overdue) }}</td>
+                      <td class="text-center">
+                        <v-progress-linear
+                          :model-value="area.progress"
+                          :color="getProgressColor(area.progress)"
+                          height="16"
+                          height-sm="20"
+                          rounded
+                          striped
+                        >
+                          <template v-slot:default="{ value }">
+                            <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
+                          </template>
+                        </v-progress-linear>
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-table>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-            <v-window v-model="activeTab">
-              <v-window-item value="institution">
-                <v-card flat class="mt-4">
-                  <v-card-text>
-                    <v-row>
-                      <v-col cols="12" md="6">
-                        <v-card outlined class="pa-4">
-                          <div class="text-subtitle-1 font-weight-bold mb-2">Total Recebido por Instituição</div>
-                          <v-list>
-                            <v-list-item v-for="(amount, institution) in institutionSummary" :key="institution">
-                              <v-list-item-title>{{ institution }}</v-list-item-title>
-                              <template v-slot:append>
-                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
-                              </template>
-                            </v-list-item>
-                          </v-list>
-                        </v-card>
-                      </v-col>
-                      <v-col cols="12" md="6">
-                        <v-card outlined class="pa-4">
-                          <div class="text-subtitle-1 font-weight-bold mb-2">Distribuição por Ano</div>
-                          <v-list>
-                            <v-list-item v-for="(amount, year) in yearSummary" :key="year">
-                              <v-list-item-title>{{ year }}</v-list-item-title>
-                              <template v-slot:append>
-                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
-                              </template>
-                            </v-list-item>
-                          </v-list>
-                        </v-card>
-                      </v-col>
-                    </v-row>
-                  </v-card-text>
-                </v-card>
-              </v-window-item>
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card class="mb-4">
+            <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
+              <v-icon size="small" size-sm="default" class="mr-2">mdi-chart-timeline-variant</v-icon>
+              Detalhamento Financeiro
+            </v-card-title>
+            <v-card-text class="pa-1 pa-sm-3">
+              <v-tabs v-model="activeTab" color="primary">
+                <v-tab value="institution">Instituição</v-tab>
+                <v-tab value="destination">Destinação</v-tab>
+                <v-tab value="areas">Áreas</v-tab>
+              </v-tabs>
 
-              <v-window-item value="destination">
-                <v-card flat class="mt-4">
-                  <v-card-text>
-                    <v-row>
-                      <v-col cols="12">
-                        <v-card outlined class="pa-4">
-                          <div class="text-subtitle-1 font-weight-bold mb-2">Destinação dos Recursos</div>
-                          <v-list>
-                            <v-list-item v-for="(amount, destination) in destinationSummary" :key="destination">
-                              <v-list-item-title>{{ destination }}</v-list-item-title>
-                              <template v-slot:append>
-                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
-                              </template>
-                            </v-list-item>
-                          </v-list>
-                        </v-card>
-                      </v-col>
-                    </v-row>
-                  </v-card-text>
-                </v-card>
-              </v-window-item>
+              <v-window v-model="activeTab">
+                <v-window-item value="institution">
+                  <v-card flat class="mt-4">
+                    <v-card-text>
+                      <v-row>
+                        <v-col cols="12" md="6">
+                          <v-card outlined class="pa-4">
+                            <div class="text-subtitle-1 font-weight-bold mb-2">Total Recebido por Instituição</div>
+                            <v-list>
+                              <v-list-item v-for="(amount, institution) in institutionSummary" :key="institution">
+                                <v-list-item-title>{{ institution }}</v-list-item-title>
+                                <template v-slot:append>
+                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
+                                </template>
+                              </v-list-item>
+                            </v-list>
+                          </v-card>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-card outlined class="pa-4">
+                            <div class="text-subtitle-1 font-weight-bold mb-2">Distribuição por Ano</div>
+                            <v-list>
+                              <v-list-item v-for="(amount, year) in yearSummary" :key="year">
+                                <v-list-item-title>{{ year }}</v-list-item-title>
+                                <template v-slot:append>
+                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
+                                </template>
+                              </v-list-item>
+                            </v-list>
+                          </v-card>
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                </v-window-item>
 
-              <v-window-item value="areas">
-                <v-card flat class="mt-4">
-                  <v-card-text>
-                    <v-row>
-                      <v-col cols="12" md="6">
-                        <v-card outlined class="pa-4">
-                          <div class="text-subtitle-1 font-weight-bold mb-2">Distribuição por Área</div>
-                          <v-list>
-                            <v-list-item v-for="area in areasSummary" :key="area.name">
-                              <v-list-item-title>{{ area.name }}</v-list-item-title>
-                              <template v-slot:append>
-                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.budget) }}</span>
-                              </template>
-                            </v-list-item>
-                          </v-list>
-                        </v-card>
-                      </v-col>
-                      <v-col cols="12" md="6">
-                        <v-card outlined class="pa-4">
-                          <div class="text-subtitle-1 font-weight-bold mb-2">Execução por Área</div>
-                          <v-list>
-                            <v-list-item v-for="area in areasSummary" :key="area.name">
-                              <v-list-item-title>{{ area.name }}</v-list-item-title>
-                              <template v-slot:append>
-                                <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.executed) }}</span>
-                              </template>
-                            </v-list-item>
-                          </v-list>
-                        </v-card>
-                      </v-col>
-                    </v-row>
-                  </v-card-text>
-                </v-card>
-              </v-window-item>
-            </v-window>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+                <v-window-item value="destination">
+                  <v-card flat class="mt-4">
+                    <v-card-text>
+                      <v-row>
+                        <v-col cols="12">
+                          <v-card outlined class="pa-4">
+                            <div class="text-subtitle-1 font-weight-bold mb-2">Destinação dos Recursos</div>
+                            <v-list>
+                              <v-list-item v-for="(amount, destination) in destinationSummary" :key="destination">
+                                <v-list-item-title>{{ destination }}</v-list-item-title>
+                                <template v-slot:append>
+                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
+                                </template>
+                              </v-list-item>
+                            </v-list>
+                          </v-card>
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                </v-window-item>
+
+                <v-window-item value="areas">
+                  <v-card flat class="mt-4">
+                    <v-card-text>
+                      <v-row>
+                        <v-col cols="12" md="6">
+                          <v-card outlined class="pa-4">
+                            <div class="text-subtitle-1 font-weight-bold mb-2">Distribuição por Área</div>
+                            <v-list>
+                              <v-list-item v-for="area in areasSummary" :key="area.name">
+                                <v-list-item-title>{{ area.name }}</v-list-item-title>
+                                <template v-slot:append>
+                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.budget) }}</span>
+                                </template>
+                              </v-list-item>
+                            </v-list>
+                          </v-card>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-card outlined class="pa-4">
+                            <div class="text-subtitle-1 font-weight-bold mb-2">Execução por Área</div>
+                            <v-list>
+                              <v-list-item v-for="area in areasSummary" :key="area.name">
+                                <v-list-item-title>{{ area.name }}</v-list-item-title>
+                                <template v-slot:append>
+                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.executed) }}</span>
+                                </template>
+                              </v-list-item>
+                            </v-list>
+                          </v-card>
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                </v-window-item>
+              </v-window>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card elevation="2" class="rounded-lg">
+            <v-card-title class="text-subtitle-1 text-sm-h6">
+              <v-icon size="small" size-sm="default" class="mr-2">{{ getSelectedGraphIcon }}</v-icon>
+              {{ getSelectedGraphTitle }}
+            </v-card-title>
+            <v-card-subtitle class="pb-0">{{ getSelectedGraphSubtitle }}</v-card-subtitle>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" class="d-flex justify-center mb-2 mb-sm-4">
+                  <v-btn-group class="flex-wrap">
+                    <v-btn
+                      v-for="graph in graphs"
+                      :key="graph.id"
+                      :color="selectedGraph === graph.id ? 'primary' : ''"
+                      @click="selectedGraph = graph.id"
+                      class="ma-1"
+                      variant="outlined"
+                      size="x-small"
+                      size-sm="small"
+                      density="compact"
+                      density-sm="default"
+                    >
+                      <v-icon size="x-small" size-sm="small" class="mr-0 mr-sm-1">{{ graph.icon }}</v-icon>
+                      <span class="d-none d-sm-inline">{{ graph.name }}</span>
+                      <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) + '...' }}</span>
+                    </v-btn>
+                  </v-btn-group>
+                </v-col>
+                <v-col cols="12">
+                  <component
+                    :is="getSelectedGraphComponent"
+                    v-bind="getSelectedGraphProps"
+                    :height="chartHeight"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </template>
   </v-container>
 </template>
 
@@ -272,6 +287,7 @@ import LineChart from "@/components/shared/charts/LineChart.vue";
 import DoughnutChart from "@/components/shared/charts/DoughnutChart.vue";
 import StatusDistributionChart from "@/components/shared/charts/StatusDistributionChart.vue";
 import GroupedBarChart from "@/components/shared/charts/GroupedBarChart.vue";
+import { useOverview } from '@/composables/useOverview';
 
 export default {
   name: "OverviewView",
@@ -285,8 +301,8 @@ export default {
   setup() {
     const { project, fetchProject } = useProject();
     const { installments, fetchInstallments } = useInstallments();
+    const { overview, loading, error, fetchOverview } = useOverview();
     const allInstallments = ref([]);
-    const areasSummary = ref([]);
     const selectedGraph = ref('status');
     const windowWidth = ref(window.innerWidth);
     const chartHeight = ref(getChartHeight());
@@ -303,16 +319,16 @@ export default {
       { title: "Progresso", key: "progress", align: "center" },
     ];
 
-    const updateAvailableYears = (projects) => {
-      if (!projects || projects.length === 0) {
+    const updateAvailableYears = () => {
+      if (!project.value || project.value.length === 0) {
         availableYears.value = [new Date().getFullYear()];
         return;
       }
 
       const years = new Set();
-      projects.forEach(project => {
-        const startYear = new Date(project.start_date).getFullYear();
-        const endYear = new Date(project.end_date).getFullYear();
+      project.value.forEach(proj => {
+        const startYear = new Date(proj.start_date).getFullYear();
+        const endYear = new Date(proj.end_date).getFullYear();
         
         for (let year = startYear; year <= endYear; year++) {
           years.add(year);
@@ -327,8 +343,7 @@ export default {
     };
 
     const handleYearChange = async () => {
-      await fetchProject(null, selectedYear.value);
-      await loadInstallments();
+      await fetchOverview(selectedYear.value);
     };
 
     function getChartHeight() {
@@ -347,19 +362,19 @@ export default {
     });
 
     const totalBudget = computed(() => {
-      return project.value ? project.value.reduce((total, proj) => total + proj.total_compensation_expected, 0) : 0;
+      return overview.value?.total_expected || 0;
     });
 
     const totalExecuted = computed(() => {
-      return project.value ? project.value.reduce((total, proj) => total + proj.total_compensation_executed, 0) : 0;
+      return overview.value?.total_executed || 0;
     });
 
     const totalPending = computed(() => {
-      return project.value ? project.value.reduce((total, proj) => total + proj.total_compensation_pending, 0) : 0;
+      return overview.value?.total_pending || 0;
     });
 
     const totalOverdue = computed(() => {
-      return project.value ? project.value.reduce((total, proj) => total + proj.total_compensation_overdue, 0) : 0;
+      return overview.value?.total_overdue || 0;
     });
 
     const projectCount = computed(() => {
@@ -367,14 +382,14 @@ export default {
     });
 
     const completedAreasSummary = computed(() => {
-      return areasSummary.value.map(area => ({
+      return overview.value?.areas_summary.map(area => ({
         name: area.name,
         value: area.executed
       })).filter(area => area.value > 0);
     });
 
     const pendingAreasSummary = computed(() => {
-      return areasSummary.value.map(area => ({
+      return overview.value?.areas_summary.map(area => ({
         name: area.name,
         value: area.pending
       })).filter(area => area.value > 0);
@@ -511,16 +526,15 @@ export default {
     });
 
     onMounted(async () => {
-      try {
-        await fetchProject();
-        updateAvailableYears(project.value);
-        
-        await fetchProject(null, selectedYear.value);
-        await loadInstallments();
-      } catch (error) {
-        console.error('Error loading data:', error);
-      }
+      await fetchProject();
+      updateAvailableYears();
+      await fetchOverview(selectedYear.value);
     });
+
+    // Watch for changes in project data to update available years
+    watch(() => project.value, () => {
+      updateAvailableYears();
+    }, { deep: true });
 
     const loadInstallments = async () => {
       const allInstallmentsData = [];
@@ -541,92 +555,30 @@ export default {
       });
 
       allInstallments.value = allInstallmentsData;
-      calculateAreasSummary();
     };
 
-    const calculateAreasSummary = () => {
-      const summary = {};
-
-      if (!allInstallments.value) return;
-
-      allInstallments.value.forEach((installment) => {
-        if (!installment.area_values) return;
-        
-        Object.entries(installment.area_values).forEach(([area, value]) => {
-          if (!summary[area]) {
-            summary[area] = {
-              name: area,
-              budget: 0,
-              executed: 0,
-              pending: 0,
-              overdue: 0,
-              progress: 0
-            };
-          }
-
-          summary[area].budget += value;
-          
-          if (installment.effective_date) {
-            summary[area].executed += value;
-          }
-
-          if (installment.status === 'Atrasada') {
-            summary[area].overdue += value;
-          }
-        });
-      });
-
-      Object.values(summary).forEach((area) => {
-        area.pending = area.budget - area.executed - area.overdue;
-        area.progress = area.budget > 0 ? (area.executed / area.budget) * 100 : 0;
-      });
-
-      areasSummary.value = Object.values(summary);
-    };
-
-    const institutionSummary = computed(() => {
-      const summary = {};
-      if (!allInstallments.value) return summary;
-      
-      allInstallments.value.forEach(installment => {
-        const institution = 'FCTE';
-        if (!summary[institution]) {
-          summary[institution] = 0;
-        }
-        summary[institution] += installment.amount;
-      });
-      
-      return summary;
+    const areasSummary = computed(() => {
+      return overview.value?.areas_summary || [];
     });
 
-const yearSummary = computed(() => {
-      const summary = {};
-      if (!allInstallments.value) return summary;
-      
-      allInstallments.value.forEach(installment => {
-        const year = new Date(installment.effective_date || installment.estimated_date).getFullYear();
-        if (!summary[year]) {
-          summary[year] = 0;
-        }
-        summary[year] += installment.amount;
-      });
-      
-      return summary;
+    const institutionSummary = computed(() => {
+      return overview.value?.institution_summary || {};
+    });
+
+    const yearSummary = computed(() => {
+      return overview.value?.year_summary || {};
     });
 
     const destinationSummary = computed(() => {
-      const summary = {};
-      if (!allInstallments.value) return summary;
-      
-      allInstallments.value.forEach(installment => {
-        const destination = installment.destination || 'Não especificado';
-        if (!summary[destination]) {
-          summary[destination] = 0;
-        }
-        summary[destination] += installment.amount;
-      });
-      
-      return summary;
+      return overview.value?.destination_summary || {};
+    });
+
+    const projectsSummary = computed(() => {
+      return overview.value?.projects_summary || [];
+    });
+
+    const monthlySummary = computed(() => {
+      return overview.value?.monthly_summary || {};
     });
 
     return {
@@ -659,6 +611,8 @@ const yearSummary = computed(() => {
       institutionSummary,
       yearSummary,
       destinationSummary,
+      projectsSummary,
+      monthlySummary,
     };
   },
 };
