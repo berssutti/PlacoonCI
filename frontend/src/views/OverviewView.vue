@@ -439,7 +439,7 @@ export default {
         icon: 'mdi-chart-bar-stacked',
         component: 'status-distribution-chart',
         props: { 
-          installments: allInstallments,
+          data: computed(() => overview.value?.areas_summary),
           graphTitle: 'Distribuição de Estados das Parcelas por Área'
         },
         title: 'Distribuição de Estados das Parcelas por Área',
@@ -452,7 +452,7 @@ export default {
         icon: 'mdi-chart-bar',
         component: 'grouped-bar-chart',
         props: { 
-          projects: project,
+          data: computed(() => overview.value?.projects_summary),
           graphTitle: 'Valores dos Ressarcimentos por Projeto'
         },
         title: 'Ressarcimentos por Projeto',
@@ -465,7 +465,7 @@ export default {
         icon: 'mdi-chart-bar',
         component: 'bar-chart',
         props: { 
-          installments: allInstallments,
+          data: computed(() => overview.value?.monthly_area_summary), 
           graphTitle: 'Distribuição de Ressarcimentos por Área'
         },
         title: 'Distribuição de Ressarcimentos por Área',
@@ -478,7 +478,7 @@ export default {
         icon: 'mdi-chart-line',
         component: 'line-chart',
         props: { 
-          installments: allInstallments,
+          data: computed(() => overview.value?.monthly_summary),
           graphTitle: 'Evolução dos Ressarcimentos Executados'
         },
         title: 'Evolução dos Ressarcimentos Executados',
@@ -492,9 +492,10 @@ export default {
     });
 
     const getSelectedGraphProps = computed(() => {
+      console.log(overview.value)
       const graph = graphs.find(g => g.id === selectedGraph.value);
       if (!graph) return {};
-      
+
       const props = {};
       Object.entries(graph.props).forEach(([key, value]) => {
         if (value && typeof value === 'object' && 'value' in value) {

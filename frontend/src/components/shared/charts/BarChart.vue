@@ -36,7 +36,7 @@ export default defineComponent({
   name: "StackedBarChart",
   components: { BarChart: Bar },
   props: {
-    installments: {
+    data: {
       type: Array,
       required: true,
     },
@@ -77,7 +77,7 @@ export default defineComponent({
     };
   },
   watch: {
-    installments: {
+    data: {
       handler() {
         this.prepareChartData();
       },
@@ -107,8 +107,9 @@ export default defineComponent({
       }).format(value);
     },
     prepareChartData() {
-      console.log("Bar chart data", this.installments);
-      if (!this.installments || this.installments.length === 0) {
+      console.log("Bar chart raw data:", this.data);
+      
+      if (!this.data || Object.keys(this.data).length === 0) {
         console.log('No data to display Bar chart');
         this.chartData = {
           labels: [],
@@ -117,54 +118,29 @@ export default defineComponent({
         return;
       }
 
-      const sortedInstallments = [...this.installments].sort((a, b) => {
-        const dateA = a.effective_date ? new Date(a.effective_date) : new Date(a.estimated_date);
-        const dateB = b.effective_date ? new Date(b.effective_date) : new Date(b.estimated_date);
-        return dateA - dateB;
-      });
-
-      const labels = [];
-      const areaNames = new Set();
-      const areaDataMap = {};
-      let totalValue = 0;
-
-      sortedInstallments.forEach((installment) => {
-        const dateToUse = installment.effective_date || installment.estimated_date;
-        const monthYear = new Date(dateToUse).toLocaleDateString("pt-BR", {
-          month: "short",
-          year: "numeric",
-        });
-        
-        if (!labels.includes(monthYear)) {
-          labels.push(monthYear);
-        }
-
-        Object.entries(installment.area_values || {}).forEach(([area, value]) => {
-          if (typeof value === 'number' && !isNaN(value)) {
-            areaNames.add(area);
-            if (!areaDataMap[area]) {
-              areaDataMap[area] = new Array(labels.length).fill(0);
-            }
-            const monthIndex = labels.indexOf(monthYear);
-            areaDataMap[area][monthIndex] = (areaDataMap[area][monthIndex] || 0) + value;
-            totalValue += value;
-          }
+      // 1. Extrair meses (labels) e áreas
+      const months = Object.keys(this.data).sort((a, b) => parseInt(a) - parseInt(b));
+      const areas = new Set();
+      
+      // Percorrer todos os meses para coletar todas as áreas existentes
+      months.forEach(month => {
+        Object.keys(this.data[month]).forEach(area => {
+          areas.add(area);
         });
       });
 
-      const areaTotals = {};
-      Array.from(areaNames).forEach(area => {
-        areaTotals[area] = (areaDataMap[area] || []).reduce((sum, val) => sum + val, 0);
-      });
-      
-      const sortedAreas = Array.from(areaNames).sort((a, b) => areaTotals[b] - areaTotals[a]);
-      
-      const datasets = sortedAreas.map((area, index) => {
+      // 2. Mapear os dados para o formato do Chart.js
+      const datasets = Array.from(areas).map((area, index) => {
         const color = this.areaColors[area] || this.colors[index % this.colors.length];
         
+        // Para cada área, criar um array de valores por mês
+        const areaData = months.map(month => {
+          return this.data[month][area] || 0; // Se não existir o valor, usar 0
+        });
+
         return {
           label: area,
-          data: areaDataMap[area],
+          data: areaData,
           backgroundColor: color,
           borderColor: '#ffffff',
           borderWidth: 2,
@@ -172,6 +148,23 @@ export default defineComponent({
         };
       });
 
+      // 3. Converter números de mês para nomes (ex: "1" -> "Jan/2023")
+      const monthNames = [
+        'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+        'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+      ];
+      
+      const currentYear = new Date().getFullYear();
+      const labels = months.map(month => {
+        return `${monthNames[parseInt(month) - 1]}/${currentYear}`;
+      });
+
+      // 4. Calcular o valor total para as porcentagens no tooltip
+      const totalValue = months.reduce((sum, month) => {
+        return sum + Object.values(this.data[month]).reduce((areaSum, val) => areaSum + val, 0);
+      }, 0);
+
+      // 5. Configurar os dados e opções do gráfico
       this.chartData = {
         labels,
         datasets,
@@ -180,14 +173,6 @@ export default defineComponent({
       this.chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
-        layout: {
-          padding: {
-            bottom: 20,
-            left: 10,
-            right: 10,
-            top: 10
-          }
-        },
         plugins: {
           legend: {
             position: "right",
@@ -200,23 +185,9 @@ export default defineComponent({
               }
             }
           },
-          title: {
-            display: false,
-          },
           tooltip: {
             mode: 'index',
             intersect: false,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            padding: 10,
-            titleFont: {
-              size: 14,
-              weight: 'bold',
-              family: "'Roboto', sans-serif"
-            },
-            bodyFont: {
-              size: 13,
-              family: "'Roboto', sans-serif"
-            },
             callbacks: {
               label: (context) => {
                 const label = context.dataset.label || '';
@@ -239,25 +210,8 @@ export default defineComponent({
               display: true,
               text: 'Mês',
               font: {
-                weight: 'bold',
-                size: 14,
-                family: "'Roboto', sans-serif"
-              },
-              padding: 10
-            },
-            grid: {
-              display: false
-            },
-            ticks: {
-              maxRotation: 45,
-              minRotation: 45,
-              font: {
-                family: "'Roboto', sans-serif",
-                size: 11
-              },
-              padding: 5,
-              autoSkip: true,
-              maxTicksLimit: 12
+                weight: 'bold'
+              }
             }
           },
           y: {
@@ -267,23 +221,13 @@ export default defineComponent({
               display: true,
               text: 'Valor (R$)',
               font: {
-                weight: 'bold',
-                size: 14,
-                family: "'Roboto', sans-serif"
-              },
-              padding: 10
+                weight: 'bold'
+              }
             },
             ticks: {
-              callback: (value) => this.formatCurrency(value),
-              font: {
-                family: "'Roboto', sans-serif"
-              }
+              callback: (value) => this.formatCurrency(value)
             }
           }
-        },
-        animation: {
-          duration: 1000,
-          easing: 'easeOutQuart'
         }
       };
     },

@@ -21,7 +21,7 @@
     name: "PieChart",
     components: { Pie },
     props: {
-      areasSummary: {
+      data: {
         type: Array,
         required: true,
       },
@@ -54,7 +54,7 @@
       };
     },
     watch: {
-      areasSummary: {
+      data: {
         handler() {
           this.prepareChartData();
         },
@@ -70,7 +70,7 @@
         }).format(value);
       },
       prepareChartData() {
-        if (!this.areasSummary || this.areasSummary.length === 0) {
+        if (!this.data || this.data.length === 0) {
           this.chartData = {
             labels: [],
             datasets: [],
@@ -78,8 +78,8 @@
           return;
         }
   
-        const labels = this.areasSummary.map((area) => area.name);
-        const data = this.areasSummary.map((area) => area.allocated);
+        const labels = this.data.map((area) => area.name);
+        const data = this.data.map((area) => area.allocated);
   
         this.chartData = {
           labels,

@@ -21,7 +21,7 @@ export default defineComponent({
   name: "DoughnutChart",
   components: { Doughnut },
   props: {
-    areasSummary: {
+    data: {
       type: Array,
       required: true,
     },
@@ -82,7 +82,7 @@ export default defineComponent({
     };
   },
   watch: {
-    areasSummary: {
+    data: {
       handler() {
         this.prepareChartData();
       },
@@ -98,7 +98,7 @@ export default defineComponent({
       }).format(value);
     },
     prepareChartData() {
-      if (!this.areasSummary || this.areasSummary.length === 0) {
+      if (!this.data || this.data.length === 0) {
         this.chartData = {
           labels: [],
           datasets: [{ data: [] }],
@@ -107,7 +107,7 @@ export default defineComponent({
       }
 
       // Filtrar áreas com valores positivos
-      const filteredAreas = this.areasSummary.filter(area => area.value > 0);
+      const filteredAreas = this.data.filter(area => area.value > 0);
       
       // Organizar áreas por valor (maior para menor)
       filteredAreas.sort((a, b) => b.value - a.value);

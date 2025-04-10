@@ -34,7 +34,7 @@ ChartJS.register(
 export default defineComponent({
   name: "StatusDistributionChart",
   props: {
-    installments: {
+    data: {
       type: Array,
       required: true,
     },
@@ -81,9 +81,17 @@ export default defineComponent({
           callbacks: {
             label: (context) => {
               const label = context.dataset.label || "";
-              const value = context.raw || 0;
-              return `${label}: ${formatCurrency(value)}`;
+              const value = parseFloat(context.raw) || 0;
+              const total = context.chart.data.datasets
+                .map(d => d.data[context.dataIndex])
+                .reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+              return `${label}: ${formatCurrency(value)} (${percentage})`;
             },
+            footer: (tooltipItems) => {
+              const total = tooltipItems.reduce((sum, tooltip) => sum + parseFloat(tooltip.raw), 0);
+              return `Total: ${formatCurrency(total)}`;
+            }
           },
         },
       },
@@ -128,9 +136,9 @@ export default defineComponent({
     };
 
     const colors = {
-      'Quitada': '#4CAF50',    // Verde
-      'Pendente': '#FFC107',   // Amarelo
-      'Atrasada': '#F44336',   // Vermelho
+      executed: '#4CAF50',    // Verde - Valor executado
+      pending: '#FFC107',     // Amarelo - Valor pendente
+      overdue: '#F44336',     // Vermelho - Valor atrasado
     };
 
     const formatCurrency = (value) => {
@@ -141,7 +149,7 @@ export default defineComponent({
     };
 
     const prepareChartData = () => {
-      if (!props.installments || props.installments.length === 0) {
+      if (!props.data || props.data.length === 0) {
         chartData.value = {
           labels: [],
           datasets: [],
@@ -149,71 +157,49 @@ export default defineComponent({
         return;
       }
 
-      const areaData = {};
-      const areaNames = new Set();
-
-      // Coletar todas as áreas e seus valores por status
-      props.installments.forEach((installment) => {
-        Object.entries(installment.area_values || {}).forEach(([area, value]) => {
-          if (typeof value === 'number' && !isNaN(value)) {
-            areaNames.add(area);
-            if (!areaData[area]) {
-              areaData[area] = {
-                'Quitada': 0,
-                'Pendente': 0,
-                'Atrasada': 0
-              };
-            }
-
-            // Determinar o status da parcela
-            let status = 'Pendente';
-            if (installment.effective_date) {
-              status = 'Quitada';
-            } else if (installment.status === 'Atrasada') {
-              status = 'Atrasada';
-            }
-
-            areaData[area][status] += value;
-          }
-        });
-      });
-
-      // Ordenar áreas por valor total
-      const sortedAreas = Array.from(areaNames).sort((a, b) => {
-        const totalA = Object.values(areaData[a]).reduce((sum, val) => sum + val, 0);
-        const totalB = Object.values(areaData[b]).reduce((sum, val) => sum + val, 0);
+      // Ordenar áreas por valor total (do maior para o menor)
+      const sortedAreas = [...props.data].sort((a, b) => {
+        const totalA = parseFloat(a.budget) || 0;
+        const totalB = parseFloat(b.budget) || 0;
         return totalB - totalA;
       });
 
+      const labels = sortedAreas.map(area => area.name);
+      
+      // Converter strings para números
+      const executedValues = sortedAreas.map(area => parseFloat(area.executed) || 0);
+      const pendingValues = sortedAreas.map(area => parseFloat(area.pending) || 0);
+      const overdueValues = sortedAreas.map(area => parseFloat(area.overdue) || 0);
+
       const datasets = [
         {
-          label: 'Quitada',
-          data: sortedAreas.map(area => areaData[area]['Quitada']),
-          backgroundColor: colors['Quitada'],
+          label: 'Executado',
+          data: executedValues,
+          backgroundColor: colors.executed,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 8,
+          borderRadius: 4,
         },
         {
           label: 'Pendente',
-          data: sortedAreas.map(area => areaData[area]['Pendente']),
-          backgroundColor: colors['Pendente'],
+          data: pendingValues,
+          backgroundColor: colors.pending,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 8,
+          borderRadius: 4,
         },
         {
-          label: 'Atrasada',
-          data: sortedAreas.map(area => areaData[area]['Atrasada']),
-          backgroundColor: colors['Atrasada'],
+          label: 'Atrasado',
+          data: overdueValues,
+          backgroundColor: colors.overdue,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 8,
+          borderRadius: 4,
         }
       ];
 
       chartData.value = {
-        labels: sortedAreas,
+        labels,
         datasets,
       };
     };
@@ -236,7 +222,7 @@ export default defineComponent({
       }
     };
 
-    watch(() => props.installments, () => {
+    watch(() => props.data, () => {
       prepareChartData();
       updateChart();
     }, { deep: true });
@@ -285,9 +271,7 @@ export default defineComponent({
 .chart-wrapper {
   flex: 1;
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  min-height: 300px;
 }
 
 .no-data {
@@ -299,4 +283,4 @@ export default defineComponent({
   color: #888888;
   font-style: italic;
 }
-</style> 
+</style>

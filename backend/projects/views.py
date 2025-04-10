@@ -191,12 +191,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
                         for installment in project_installments
                     )
                     
-                    # Add to monthly summary
                     if area_name not in monthly_area_summary[month]:
                         monthly_area_summary[month][area_name] = 0
                     monthly_area_summary[month][area_name] += float(area_amount)
 
-        # Calculate institution summary (FCTE)
         executed_installments = installments.filter(
             effective_date__isnull=False,
             status='Quitada'

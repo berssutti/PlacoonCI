@@ -36,8 +36,8 @@ ChartJS.register(
 export default defineComponent({
   name: "LineChart",
   props: {
-    installments: {
-      type: Array,
+    data: {
+      type: Object,
       required: true,
     },
     graphTitle: {
@@ -75,6 +75,9 @@ export default defineComponent({
               const value = context.raw || 0;
               return `${label}: ${formatCurrency(value)}`;
             },
+            title: (tooltipItems) => {
+              return tooltipItems[0].label;
+            }
           },
         },
       },
@@ -90,9 +93,14 @@ export default defineComponent({
           },
           grid: {
             display: false
+          },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
           }
         },
         y: {
+          beginAtZero: true,
           title: {
             display: true,
             text: "Valor (R$)",
@@ -117,13 +125,6 @@ export default defineComponent({
       "#FFC107", // amarelo
       "#9C27B0", // roxo
       "#F44336", // vermelho
-      "#00BCD4", // ciano
-      "#FF9800", // laranja
-      "#3F51B5", // indigo
-      "#E91E63", // rosa
-      "#009688", // verde-azulado
-      "#8BC34A", // verde claro
-      "#673AB7", // roxo escuro
     ];
 
     const formatCurrency = (value) => {
@@ -134,7 +135,9 @@ export default defineComponent({
     };
 
     const prepareChartData = () => {
-      if (!props.installments || props.installments.length === 0) {
+      console.log("Line Chart Data:", props.data);
+      
+      if (!props.data || Object.keys(props.data).length === 0) {
         chartData.value = {
           labels: [],
           datasets: [],
@@ -142,31 +145,27 @@ export default defineComponent({
         return;
       }
 
-      const labels = [];
-      const data = [];
+      // Converter objeto de meses em arrays ordenados
+      const months = Object.keys(props.data)
+        .map(month => parseInt(month))
+        .sort((a, b) => a - b);
 
-      props.installments.forEach((installment) => {
-        const date = new Date(installment.effective_date || installment.estimated_date);
-        const monthYear = date.toLocaleDateString("pt-BR", {
-          month: "short",
-          year: "numeric",
-        });
+      // Nomes dos meses abreviados
+      const monthNames = [
+        'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+        'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+      ];
 
-        if (!labels.includes(monthYear)) {
-          labels.push(monthYear);
-          data.push(installment.amount);
-        } else {
-          const index = labels.indexOf(monthYear);
-          data[index] += installment.amount;
-        }
-      });
+      const currentYear = new Date().getFullYear();
+      const labels = months.map(month => `${monthNames[month - 1]}/${currentYear}`);
+      const values = months.map(month => parseFloat(props.data[month]) || 0);
 
       chartData.value = {
         labels,
         datasets: [
           {
             label: "Orçamento Executado",
-            data,
+            data: values,
             borderColor: colors[0],
             backgroundColor: `${colors[0]}33`,
             borderWidth: 2,
@@ -200,7 +199,7 @@ export default defineComponent({
       }
     };
 
-    watch(() => props.installments, () => {
+    watch(() => props.data, () => {
       prepareChartData();
       updateChart();
     }, { deep: true });
@@ -249,9 +248,7 @@ export default defineComponent({
 .chart-wrapper {
   flex: 1;
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  min-height: 300px;
 }
 
 .no-data {

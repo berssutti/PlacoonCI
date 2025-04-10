@@ -12,7 +12,6 @@
 
 <script>
 import { defineComponent, ref, onMounted, watch, onBeforeUnmount } from "vue";
-import { useRouter } from 'vue-router';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -35,7 +34,7 @@ ChartJS.register(
 export default defineComponent({
   name: "GroupedBarChart",
   props: {
-    projects: {
+    data: {
       type: Array,
       required: true,
     },
@@ -49,7 +48,6 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const router = useRouter();
     const chartRef = ref(null);
     let chart = null;
 
@@ -57,16 +55,6 @@ export default defineComponent({
     const chartOptions = {
       responsive: true,
       maintainAspectRatio: false,
-      onClick: (event, elements) => {
-        if (elements && elements.length > 0) {
-          const index = elements[0].index;
-          const sortedProjects = [...props.projects].sort((a, b) => {
-            return b.total_compensation_expected - a.total_compensation_expected;
-          });
-          const projectId = sortedProjects[index].id;
-          router.push(`/projects/${projectId}`);
-        }
-      },
       plugins: {
         legend: {
           position: "right",
@@ -93,17 +81,18 @@ export default defineComponent({
           callbacks: {
             label: (context) => {
               const label = context.dataset.label || "";
-              const value = context.raw || 0;
-              const total = context.chart.data.datasets[0].data[context.dataIndex];
-              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
-              return `${label}: ${formatCurrency(value)} (${percentage})`;
+              const value = parseFloat(context.raw) || 0;
+              return `${label}: ${formatCurrency(value)}`;
             },
+            title: (tooltipItems) => {
+              return tooltipItems[0].label;
+            }
           },
         },
       },
       scales: {
         x: {
-          stacked: false,
+          grouped: true,  // Esta opção agrupa as barras
           title: {
             display: true,
             text: "Projetos",
@@ -121,7 +110,6 @@ export default defineComponent({
           }
         },
         y: {
-          stacked: false,
           beginAtZero: true,
           title: {
             display: true,
@@ -139,20 +127,17 @@ export default defineComponent({
           }
         },
       },
-      hover: {
+      interaction: {
         mode: 'index',
-        intersect: false,
-        onHover: (event, elements) => {
-          event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
-        }
-      },
+        intersect: false
+      }
     };
 
     const colors = {
-      total: '#2196F3',    // Azul
-      executed: '#4CAF50', // Verde
-      overdue: '#F44336',  // Vermelho
-      pending: '#FFC107'   // Amarelo
+      expected: '#2196F3',    // Azul - Valor esperado
+      executed: '#4CAF50',    // Verde - Valor executado
+      overdue: '#F44336',     // Vermelho - Valor atrasado
+      pending: '#FFC107'      // Amarelo - Valor pendente
     };
 
     const formatCurrency = (value) => {
@@ -163,7 +148,7 @@ export default defineComponent({
     };
 
     const prepareChartData = () => {
-      if (!props.projects || props.projects.length === 0) {
+      if (!props.data || props.data.length === 0) {
         chartData.value = {
           labels: [],
           datasets: [],
@@ -171,45 +156,51 @@ export default defineComponent({
         return;
       }
 
-      // Ordenar projetos por valor total (do maior para o menor)
-      const sortedProjects = [...props.projects].sort((a, b) => {
-        return b.total_compensation_expected - a.total_compensation_expected;
+      // Ordenar projetos por valor esperado (do maior para o menor)
+      const sortedProjects = [...props.data].sort((a, b) => {
+        return parseFloat(b.expected) - parseFloat(a.expected);
       });
 
       const labels = sortedProjects.map(project => project.name);
       
+      // Converter strings para números
+      const expectedValues = sortedProjects.map(project => parseFloat(project.expected));
+      const executedValues = sortedProjects.map(project => parseFloat(project.executed));
+      const overdueValues = sortedProjects.map(project => parseFloat(project.overdue));
+      const pendingValues = sortedProjects.map(project => parseFloat(project.pending));
+
       const datasets = [
         {
-          label: 'Ressarcimento Total',
-          data: sortedProjects.map(project => project.total_compensation_expected),
-          backgroundColor: colors.total,
+          label: 'Valor Esperado',
+          data: expectedValues,
+          backgroundColor: colors.expected,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 8,
+          borderRadius: 4,
         },
         {
-          label: 'Ressarcimento Executado',
-          data: sortedProjects.map(project => project.total_compensation_executed),
+          label: 'Valor Executado',
+          data: executedValues,
           backgroundColor: colors.executed,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 8,
+          borderRadius: 4,
         },
         {
-          label: 'Ressarcimento Atrasado',
-          data: sortedProjects.map(project => project.total_compensation_overdue),
+          label: 'Valor Atrasado',
+          data: overdueValues,
           backgroundColor: colors.overdue,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 8,
+          borderRadius: 4,
         },
         {
-          label: 'Ressarcimento Pendente',
-          data: sortedProjects.map(project => project.total_compensation_pending),
+          label: 'Valor Pendente',
+          data: pendingValues,
           backgroundColor: colors.pending,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 8,
+          borderRadius: 4,
         }
       ];
 
@@ -237,7 +228,7 @@ export default defineComponent({
       }
     };
 
-    watch(() => props.projects, () => {
+    watch(() => props.data, () => {
       prepareChartData();
       updateChart();
     }, { deep: true });
@@ -286,6 +277,7 @@ export default defineComponent({
 .chart-wrapper {
   flex: 1;
   position: relative;
+  min-height: 300px;
 }
 
 .no-data {
@@ -297,4 +289,4 @@ export default defineComponent({
   color: #888888;
   font-style: italic;
 }
-</style> 
+</style>
