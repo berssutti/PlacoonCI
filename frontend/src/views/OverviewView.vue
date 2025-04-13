@@ -129,9 +129,9 @@
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
               <v-tabs v-model="activeTab" color="primary">
-                <v-tab value="institution">Instituição</v-tab>
+                <!-- <v-tab value="institution">Instituição</v-tab> -->
                 <v-tab value="destination">Destinação</v-tab>
-                <v-tab value="areas">Áreas</v-tab>
+                <!-- <v-tab value="areas">Áreas</v-tab> -->
               </v-tabs>
 
               <v-window v-model="activeTab">
