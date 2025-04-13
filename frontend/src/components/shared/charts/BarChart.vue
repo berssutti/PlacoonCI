@@ -1,6 +1,6 @@
 <template>
-  <div class="chart-container">
-    <h3 class="chart-title">{{ graphTitle }}</h3>
+  <div class="chart-container" :style="{ height: `${height}px` }">
+    <h3 v-if="graphTitle" class="chart-title">{{ graphTitle }}</h3>
     <div class="chart-wrapper">
       <bar-chart :data="chartData" :options="chartOptions" />
     </div>
@@ -36,19 +36,37 @@ export default defineComponent({
   name: "StackedBarChart",
   components: { BarChart: Bar },
   props: {
-    installments: {
+    data: {
       type: Array,
       required: true,
     },
     graphTitle: {
       type: String,
-      required: true,
+      default: "",
+    },
+    height: {
+      type: Number,
+      default: 450,
     },
   },
   data() {
     return {
       chartData: null,
       chartOptions: null,
+      colors: [
+        "#4CAF50", // verde
+        "#2196F3", // azul
+        "#FFC107", // amarelo
+        "#9C27B0", // roxo
+        "#F44336", // vermelho
+        "#00BCD4", // ciano
+        "#FF9800", // laranja
+        "#3F51B5", // indigo
+        "#E91E63", // rosa
+        "#009688", // verde-azulado
+        "#8BC34A", // verde claro
+        "#673AB7", // roxo escuro
+      ],
       areaColors: {
         'Engenharia de Software': '#4CAF50',   // Verde
         'Engenharia de Energia': '#FFC107',    // Amarelo
@@ -59,7 +77,7 @@ export default defineComponent({
     };
   },
   watch: {
-    installments: {
+    data: {
       handler() {
         this.prepareChartData();
       },
@@ -69,17 +87,13 @@ export default defineComponent({
   },
   mounted() {
     this.prepareChartData();
-    
-    // Adicionar responsividade ao redimensionar a janela
     window.addEventListener('resize', this.handleResize);
   },
   beforeUnmount() {
-    // Remover o event listener quando o componente for desmontado
     window.removeEventListener('resize', this.handleResize);
   },
   methods: {
     handleResize() {
-      // Atualizar o gráfico quando a janela for redimensionada
       if (this.chartData) {
         this.$nextTick(() => {
           ChartJS.defaults.font.size = window.innerWidth < 768 ? 10 : 12;
@@ -93,7 +107,10 @@ export default defineComponent({
       }).format(value);
     },
     prepareChartData() {
-      if (!this.installments || this.installments.length === 0) {
+      console.log("Bar chart raw data:", this.data);
+      
+      if (!this.data || Object.keys(this.data).length === 0) {
+        console.log('No data to display Bar chart');
         this.chartData = {
           labels: [],
           datasets: []
@@ -101,58 +118,53 @@ export default defineComponent({
         return;
       }
 
-      const sortedInstallments = [...this.installments].sort((a, b) => {
-        const dateA = a.effective_date ? new Date(a.effective_date) : new Date(a.estimated_date);
-        const dateB = b.effective_date ? new Date(b.effective_date) : new Date(b.estimated_date);
-        return dateA - dateB;
+      // 1. Extrair meses (labels) e áreas
+      const months = Object.keys(this.data).sort((a, b) => parseInt(a) - parseInt(b));
+      const areas = new Set();
+      
+      // Percorrer todos os meses para coletar todas as áreas existentes
+      months.forEach(month => {
+        Object.keys(this.data[month]).forEach(area => {
+          areas.add(area);
+        });
       });
 
-      const labels = [];
-      const areaNames = new Set();
-      const areaDataMap = {};
-      let totalValue = 0;
-
-      sortedInstallments.forEach((installment) => {
-        const dateToUse = installment.effective_date || installment.estimated_date;
-        const monthYear = new Date(dateToUse).toLocaleDateString("pt-BR", {
-          month: "short",
-          year: "numeric",
-        });
+      // 2. Mapear os dados para o formato do Chart.js
+      const datasets = Array.from(areas).map((area, index) => {
+        const color = this.areaColors[area] || this.colors[index % this.colors.length];
         
-        if (!labels.includes(monthYear)) {
-          labels.push(monthYear);
-        }
-
-        Object.entries(installment.area_values || {}).forEach(([area, value]) => {
-          if (typeof value === 'number' && !isNaN(value)) {
-            areaNames.add(area);
-            if (!areaDataMap[area]) {
-              areaDataMap[area] = new Array(labels.length).fill(0);
-            }
-            const monthIndex = labels.indexOf(monthYear);
-            areaDataMap[area][monthIndex] = (areaDataMap[area][monthIndex] || 0) + value;
-            totalValue += value;
-          }
+        // Para cada área, criar um array de valores por mês
+        const areaData = months.map(month => {
+          return this.data[month][area] || 0; // Se não existir o valor, usar 0
         });
+
+        return {
+          label: area,
+          data: areaData,
+          backgroundColor: color,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          borderRadius: 8,
+        };
       });
 
-      const defaultColor = '#777777';
+      // 3. Converter números de mês para nomes (ex: "1" -> "Jan/2023")
+      const monthNames = [
+        'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+        'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+      ];
       
-      const areaTotals = {};
-      Array.from(areaNames).forEach(area => {
-        areaTotals[area] = (areaDataMap[area] || []).reduce((sum, val) => sum + val, 0);
+      const currentYear = new Date().getFullYear();
+      const labels = months.map(month => {
+        return `${monthNames[parseInt(month) - 1]}/${currentYear}`;
       });
-      
-      const sortedAreas = Array.from(areaNames).sort((a, b) => areaTotals[b] - areaTotals[a]);
-      
-      const datasets = sortedAreas.map((area) => ({
-        label: area,
-        data: areaDataMap[area],
-        backgroundColor: this.areaColors[area] || defaultColor,
-        borderColor: '#ffffff',
-        borderWidth: 1,
-      }));
 
+      // 4. Calcular o valor total para as porcentagens no tooltip
+      const totalValue = months.reduce((sum, month) => {
+        return sum + Object.values(this.data[month]).reduce((areaSum, val) => areaSum + val, 0);
+      }, 0);
+
+      // 5. Configurar os dados e opções do gráfico
       this.chartData = {
         labels,
         datasets,
@@ -163,30 +175,19 @@ export default defineComponent({
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: "top",
+            position: "right",
             labels: {
-              usePointStyle: true,
+              boxWidth: 15,
               padding: 15,
               font: {
-                size: 12
+                size: 12,
+                family: "'Roboto', sans-serif"
               }
             }
-          },
-          title: {
-            display: false,
           },
           tooltip: {
             mode: 'index',
             intersect: false,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            padding: 10,
-            titleFont: {
-              size: 14,
-              weight: 'bold'
-            },
-            bodyFont: {
-              size: 13
-            },
             callbacks: {
               label: (context) => {
                 const label = context.dataset.label || '';
@@ -209,17 +210,8 @@ export default defineComponent({
               display: true,
               text: 'Mês',
               font: {
-                weight: 'bold',
-                size: 14
-              },
-              padding: 10
-            },
-            grid: {
-              display: false
-            },
-            ticks: {
-              maxRotation: 45,
-              minRotation: 45
+                weight: 'bold'
+              }
             }
           },
           y: {
@@ -229,19 +221,13 @@ export default defineComponent({
               display: true,
               text: 'Valor (R$)',
               font: {
-                weight: 'bold',
-                size: 14
-              },
-              padding: 10
+                weight: 'bold'
+              }
             },
             ticks: {
               callback: (value) => this.formatCurrency(value)
             }
           }
-        },
-        animation: {
-          duration: 1000,
-          easing: 'easeOutQuart'
         }
       };
     },
@@ -253,11 +239,12 @@ export default defineComponent({
 .chart-container {
   display: flex;
   flex-direction: column;
-  height: 450px;
   padding: 15px;
   background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 100%;
 }
 
 .chart-title {
@@ -268,11 +255,18 @@ export default defineComponent({
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid #eeeeee;
+  font-family: 'Roboto', sans-serif;
 }
 
 .chart-wrapper {
   flex: 1;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  width: 100%;
+  padding-bottom: 40px;
 }
 
 .no-data {
@@ -283,17 +277,22 @@ export default defineComponent({
   text-align: center;
   color: #888888;
   font-style: italic;
+  font-family: 'Roboto', sans-serif;
 }
 
 @media (max-width: 767px) {
   .chart-container {
-    height: 350px;
     padding: 10px;
   }
   
   .chart-title {
     font-size: 16px;
     margin-bottom: 10px;
+  }
+
+  .chart-wrapper {
+    min-height: 300px;
+    padding-bottom: 60px;
   }
 }
 </style>

@@ -28,6 +28,10 @@ class ProjectSerializer(serializers.ModelSerializer):
             'end_date',
             'total_unb_amount_expected',
             'total_fcte_amount_expected',
+            'total_compensation_expected',
+            'total_compensation_executed',
+            'total_compensation_pending',
+            'total_compensation_overdue',
             'coordinator',
             'substitute_coordinator',
             'academic_supervisor',
@@ -101,3 +105,43 @@ class InstallmentSerializer(serializers.ModelSerializer):
             amount_decimal = Decimal(str(obj.amount))
             area_values[project_area.area.name] = amount_decimal * (project_area.percentage / Decimal("100"))
         return area_values
+
+class OverviewSerializer(serializers.Serializer):
+    total_expected = serializers.FloatField()
+    total_executed = serializers.FloatField()
+    total_pending = serializers.FloatField()
+    total_overdue = serializers.FloatField()
+    areas_summary = serializers.ListField(
+        child=serializers.DictField(
+            child=serializers.CharField(),
+            allow_empty=True
+        )
+    )
+    institution_summary = serializers.DictField(
+        child=serializers.FloatField(),
+        allow_empty=True
+    )
+    year_summary = serializers.DictField(
+        child=serializers.FloatField(),
+        allow_empty=True
+    )
+    destination_summary = serializers.DictField(
+        child=serializers.FloatField(),
+        allow_empty=True
+    )
+    projects_summary = serializers.ListField(
+        child=serializers.DictField(
+            child=serializers.CharField(),
+            allow_empty=True
+        )
+    )
+    monthly_summary = serializers.DictField(
+        child=serializers.FloatField(),
+        allow_empty=True
+    )
+    monthly_area_summary = serializers.DictField(
+        child=serializers.DictField(
+            child=serializers.FloatField(),
+            allow_empty=True
+        )
+    )

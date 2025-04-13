@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 
 class Area(models.Model):
     name = models.CharField(max_length=100)
@@ -20,6 +22,22 @@ class Project(models.Model):
     end_date = models.DateField()
     total_unb_amount_expected = models.FloatField()
     total_fcte_amount_expected = models.FloatField()
+    total_compensation_expected = models.FloatField(
+        null=True,
+        blank=True
+    )
+    total_compensation_executed = models.FloatField(
+        null=True,
+        blank=True  
+    )
+    total_compensation_pending = models.FloatField(
+        null=True,
+        blank=True
+    )
+    total_compensation_overdue = models.FloatField(
+        null=True,
+        blank=True
+    )
     coordinator = models.CharField(max_length=100)
     substitute_coordinator = models.CharField(max_length=100)
     academic_supervisor = models.CharField(max_length=100)
@@ -77,6 +95,19 @@ class Project(models.Model):
     def __str__(self):
         return self.name
 
+    def calculate_compensation_totals(self):
+        """Calculate and update the compensation totals based on installment statuses."""
+        executed = self.installments.filter(status='Quitada').aggregate(total=models.Sum('amount'))['total'] or 0
+        pending = self.installments.filter(status='Pendente').aggregate(total=models.Sum('amount'))['total'] or 0
+        overdue = self.installments.filter(status='Atrasada').aggregate(total=models.Sum('amount'))['total'] or 0
+        expected = executed + pending + overdue
+
+        self.total_compensation_executed = executed
+        self.total_compensation_pending = pending
+        self.total_compensation_overdue = overdue
+        self.total_compensation_expected = expected
+        self.save()
+
 
 class ProjectArea(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -88,6 +119,7 @@ class ProjectArea(models.Model):
 
     def __str__(self):
         return f"{self.project.name} - {self.area.name} ({self.percentage}%)"
+
 
 class Installment(models.Model):
     STATUS_CHOICES = [
@@ -118,5 +150,14 @@ class Installment(models.Model):
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
-        default='Pendente',
+        default='Pendente'
     )
+
+    def __str__(self):
+        return f"{self.project.name} - {self.amount} ({self.status})"
+
+
+@receiver([post_save, post_delete], sender=Installment)
+def update_project_compensation_totals(sender, instance, **kwargs):
+    """Signal to update project compensation totals when an installment is saved or deleted."""
+    instance.project.calculate_compensation_totals()
