@@ -46,27 +46,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
         except ValueError:
             return Response({'error': 'Invalid year format'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get projects active in the specified year
         projects = self.get_queryset().filter(
             Q(start_date__lte=end_of_year) & 
             (Q(end_date__gte=start_of_year) | Q(end_date__isnull=True))
         )
 
-        # Get all installments for these projects with effective_date in the selected year
         installments = Installment.objects.filter(
             project__in=projects,
             effective_date__gte=start_of_year,
             effective_date__lte=end_of_year,
-            status='Quitada'  # Apenas parcelas quitadas
+            status='Quitada'
         )
 
-        # Calculate totals based on installments
         total_expected = float(sum(installment.amount or 0 for installment in installments))
         
-        # Calculate executed amount (installments with effective_date)
         total_executed = float(sum(installment.amount or 0 for installment in installments))
         
-        # Calculate pending amount (installments without effective_date and not overdue)
         pending_installments = Installment.objects.filter(
             project__in=projects,
             estimated_date__gte=start_of_year,
@@ -76,7 +71,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         )
         total_pending = float(sum(installment.amount or 0 for installment in pending_installments))
         
-        # Calculate overdue amount (installments with status 'Atrasada')
         overdue_installments = Installment.objects.filter(
             project__in=projects,
             estimated_date__gte=start_of_year,
@@ -85,10 +79,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         )
         total_overdue = float(sum(installment.amount or 0 for installment in overdue_installments))
 
-        # Calculate total expected (sum of executed, pending and overdue)
         total_expected = total_executed + total_pending + total_overdue
 
-        # Calculate projects summary
         projects_summary = []
         for project in projects:
             project_installments = installments.filter(project=project)
@@ -108,7 +100,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 'overdue': project_overdue
             })
 
-        # Calculate area summaries
         areas_summary = []
         for project in projects:
             project_installments = installments.filter(project=project)
@@ -130,7 +121,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     }
                     areas_summary.append(area_data)
 
-                # Calculate area values based on installments and percentage
                 for installment in project_installments:
                     amount = installment.amount or 0
                     area_amount = Decimal(str(amount)) * (project_area.percentage / Decimal('100'))
@@ -146,11 +136,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     area_amount = Decimal(str(amount)) * (project_area.percentage / Decimal('100'))
                     area_data['overdue'] += float(area_amount)
                 
-                # Calculate total budget (sum of executed, pending and overdue)
                 area_data['budget'] = area_data['executed'] + area_data['pending'] + area_data['overdue']
                 area_data['progress'] = (area_data['executed'] / area_data['budget'] * 100) if area_data['budget'] > 0 else 0
 
-        # Calculate monthly summary
         monthly_summary = {}
         for month in range(1, 13):
             month_start = datetime(year, month, 1)
@@ -162,30 +150,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
             )
             monthly_summary[month] = float(sum(installment.amount or 0 for installment in month_installments))
 
-        # Calculate monthly area summary
         monthly_area_summary = {}
         for month in range(1, 13):
             month_start = datetime(year, month, 1)
             month_end = datetime(year, month + 1, 1) if month < 12 else datetime(year + 1, 1, 1)
             
-            # Get installments for this month based on effective_date (data de pagamento)
             month_installments = installments.filter(
                 effective_date__gte=month_start,
                 effective_date__lt=month_end,
                 status='Quitada'  # Apenas parcelas quitadas
             )
             
-            # Initialize month data
             monthly_area_summary[month] = {}
             
-            # For each project and its areas
             for project in projects:
                 project_installments = month_installments.filter(project=project)
                 
                 for project_area in project.projectarea_set.all():
                     area_name = project_area.area.name
                     
-                    # Calculate area amount for this month
                     area_amount = sum(
                         Decimal(str(installment.amount or 0)) * (project_area.percentage / Decimal('100'))
                         for installment in project_installments
@@ -201,7 +184,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         )
         institution_summary = {'FCTE': float(sum(installment.amount or 0 for installment in executed_installments))}
 
-        # Calculate year summary
         year_summary = {}
         for installment in executed_installments:
             year = installment.effective_date.year
@@ -209,7 +191,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 year_summary[year] = 0
             year_summary[year] += float(installment.amount or 0)
 
-        # Calculate destination summary
         destination_summary = {}
         for installment in executed_installments:
             destination = installment.destination or 'Não especificado'
@@ -257,7 +238,6 @@ class InstallmentViewSet(viewsets.ModelViewSet):
                     estimated_date__lte=end_of_year
                 )
             except ValueError:
-                # If year is not a valid integer, return all installments
                 pass
                 
         return queryset.order_by('estimated_date')
