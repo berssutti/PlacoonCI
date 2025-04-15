@@ -75,46 +75,91 @@
 
       <v-row class="mt-4">
         <v-col cols="12">
+          <v-card elevation="2" class="rounded-lg">
+            <v-card-title class="text-subtitle-1 text-sm-h6">
+              <v-icon size="small" size-sm="default" class="mr-2">{{ getSelectedGraphIcon }}</v-icon>
+              {{ getSelectedGraphTitle }}
+            </v-card-title>
+            <v-card-subtitle class="pb-0">{{ getSelectedGraphSubtitle }}</v-card-subtitle>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" class="d-flex justify-center mb-2 mb-sm-4">
+                  <v-btn-group class="flex-wrap">
+                    <v-btn
+                      v-for="graph in graphs"
+                      :key="graph.id"
+                      :color="selectedGraph === graph.id ? 'primary' : ''"
+                      @click="selectedGraph = graph.id"
+                      class="ma-1"
+                      variant="outlined"
+                      size="x-small"
+                      size-sm="small"
+                      density="compact"
+                      density-sm="default"
+                    >
+                      <v-icon size="x-small" size-sm="small" class="mr-0 mr-sm-1">{{ graph.icon }}</v-icon>
+                      <span class="d-none d-sm-inline">{{ graph.name }}</span>
+                      <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) + '...' }}</span>
+                    </v-btn>
+                  </v-btn-group>
+                </v-col>
+                <v-col cols="12">
+                  <component
+                    :is="getSelectedGraphComponent"
+                    v-bind="getSelectedGraphProps"
+                    :height="chartHeight"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <v-row class="mt-4">
+        <v-col cols="12">
           <v-card class="mb-4">
             <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
               <v-icon size="small" size-sm="default" class="mr-2">mdi-cash-multiple</v-icon>
               Resumo Financeiro por Área
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
-              <div class="table-responsive">
-                <v-table class="elevation-1" density="compact" density-sm="default">
-                  <thead>
-                    <tr>
-                      <th v-for="header in headers" :key="header.key" :class="header.align">
-                        {{ header.title }}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="area in areasSummary" :key="area.name">
-                      <td>{{ area.name }}</td>
-                      <td class="text-end">{{ formatCurrency(area.budget) }}</td>
-                      <td class="text-end">{{ formatCurrency(area.executed) }}</td>
-                      <td class="text-end">{{ formatCurrency(area.pending) }}</td>
-                      <td class="text-end">{{ formatCurrency(area.overdue) }}</td>
-                      <td class="text-center">
-                        <v-progress-linear
-                          :model-value="area.progress"
-                          :color="getProgressColor(area.progress)"
-                          height="16"
-                          height-sm="20"
-                          rounded
-                          striped
-                        >
-                          <template v-slot:default="{ value }">
-                            <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
-                          </template>
-                        </v-progress-linear>
-                      </td>
-                    </tr>
-                  </tbody>
-                </v-table>
-              </div>
+              <v-data-table
+                :headers="headers"
+                :items="areasSummary"
+                class="elevation-1"
+                density="compact"
+                hide-default-footer
+                >
+                <template v-slot:item.budget="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.budget) }}</span>
+                </template>
+                <template v-slot:item.executed="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.executed) }}</span>
+                </template>
+                <template v-slot:item.pending="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.pending) }}</span>
+                </template>
+                <template v-slot:item.overdue="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.overdue) }}</span>
+                </template>
+                <template v-slot:item.progress="{ item }">
+                  <div class="text-center">
+                    <v-progress-linear
+                      :model-value="item.progress"
+                      :color="getProgressColor(item.progress)"
+                      height="16"
+                      height-sm="20"
+                      rounded
+                      striped
+                    >
+                      <template v-slot:default="{ value }">
+                        <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
+                      </template>
+                    </v-progress-linear>
+                  </div>
+                </template>
+              </v-data-table>
             </v-card-text>
           </v-card>
         </v-col>
@@ -125,7 +170,7 @@
           <v-card class="mb-4">
             <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
               <v-icon size="small" size-sm="default" class="mr-2">mdi-chart-timeline-variant</v-icon>
-              Detalhamento Financeiro
+              Detalhamento da Destinação
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
               <v-tabs v-model="activeTab" color="primary">
@@ -232,48 +277,6 @@
         </v-col>
       </v-row>
 
-      <v-row class="mt-4">
-        <v-col cols="12">
-          <v-card elevation="2" class="rounded-lg">
-            <v-card-title class="text-subtitle-1 text-sm-h6">
-              <v-icon size="small" size-sm="default" class="mr-2">{{ getSelectedGraphIcon }}</v-icon>
-              {{ getSelectedGraphTitle }}
-            </v-card-title>
-            <v-card-subtitle class="pb-0">{{ getSelectedGraphSubtitle }}</v-card-subtitle>
-            <v-card-text>
-              <v-row>
-                <v-col cols="12" class="d-flex justify-center mb-2 mb-sm-4">
-                  <v-btn-group class="flex-wrap">
-                    <v-btn
-                      v-for="graph in graphs"
-                      :key="graph.id"
-                      :color="selectedGraph === graph.id ? 'primary' : ''"
-                      @click="selectedGraph = graph.id"
-                      class="ma-1"
-                      variant="outlined"
-                      size="x-small"
-                      size-sm="small"
-                      density="compact"
-                      density-sm="default"
-                    >
-                      <v-icon size="x-small" size-sm="small" class="mr-0 mr-sm-1">{{ graph.icon }}</v-icon>
-                      <span class="d-none d-sm-inline">{{ graph.name }}</span>
-                      <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) + '...' }}</span>
-                    </v-btn>
-                  </v-btn-group>
-                </v-col>
-                <v-col cols="12">
-                  <component
-                    :is="getSelectedGraphComponent"
-                    v-bind="getSelectedGraphProps"
-                    :height="chartHeight"
-                  />
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
     </template>
   </v-container>
 </template>
@@ -434,23 +437,23 @@ export default {
     const graphs = [
       {
         id: 'status',
-        name: 'Estados das Parcelas por Área',
+        name: 'Estágios das Parcelas por Área',
         shortName: 'Est',
-        icon: 'mdi-chart-bar-stacked',
-        component: 'status-distribution-chart',
+        icon: 'mdi-chart-bar',
+        component: 'grouped-bar-chart',
         props: { 
           data: computed(() => overview.value?.areas_summary),
-          graphTitle: 'Distribuição de Estados das Parcelas por Área'
+          graphTitle: 'Distribuição de Estágios das Parcelas por Área'
         },
-        title: 'Distribuição de Estados das Parcelas por Área',
-        subtitle: 'Estados das parcelas por área de investimento'
+        title: 'Distribuição de Estágios das Parcelas por Área',
+        subtitle: 'Estágios das parcelas por área de investimento'
       },
       {
         id: 'grouped_bar',
         name: 'Ressarcimentos por Projeto',
         shortName: 'Proj',
-        icon: 'mdi-chart-bar',
-        component: 'grouped-bar-chart',
+        icon: 'mdi-chart-bar-stacked',
+        component: 'status-distribution-chart',
         props: { 
           data: computed(() => overview.value?.projects_summary),
           graphTitle: 'Valores dos Ressarcimentos por Projeto'

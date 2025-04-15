@@ -178,7 +178,7 @@ export default defineComponent({
           backgroundColor: colors.executed,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 4,
+          borderRadius: 8,
         },
         {
           label: 'Pendente',
@@ -186,7 +186,7 @@ export default defineComponent({
           backgroundColor: colors.pending,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 4,
+          borderRadius: 8,
         },
         {
           label: 'Atrasado',
@@ -194,7 +194,7 @@ export default defineComponent({
           backgroundColor: colors.overdue,
           borderColor: '#ffffff',
           borderWidth: 2,
-          borderRadius: 4,
+          borderRadius: 8,
         }
       ];
 
