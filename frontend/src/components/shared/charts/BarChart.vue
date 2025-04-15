@@ -154,9 +154,8 @@ export default defineComponent({
         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
       ];
       
-      const currentYear = new Date().getFullYear();
       const labels = months.map(month => {
-        return `${monthNames[parseInt(month) - 1]}/${currentYear}`;
+        return `${monthNames[parseInt(month) - 1]}`;
       });
 
       // 4. Calcular o valor total para as porcentagens no tooltip

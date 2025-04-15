@@ -156,8 +156,7 @@ export default defineComponent({
         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
       ];
 
-      const currentYear = new Date().getFullYear();
-      const labels = months.map(month => `${monthNames[month - 1]}/${currentYear}`);
+      const labels = months.map(month => `${monthNames[month - 1]}`);
       const values = months.map(month => parseFloat(props.data[month]) || 0);
 
       chartData.value = {

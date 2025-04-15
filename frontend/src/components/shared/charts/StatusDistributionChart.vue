@@ -156,8 +156,6 @@ export default defineComponent({
         };
         return;
       }
-
-      // Ordenar áreas por valor total (do maior para o menor)
       const sortedAreas = [...props.data].sort((a, b) => {
         const totalA = parseFloat(a.budget) || 0;
         const totalB = parseFloat(b.budget) || 0;
@@ -165,12 +163,11 @@ export default defineComponent({
       });
 
       const labels = sortedAreas.map(area => area.name);
-      
-      // Converter strings para números
+
       const executedValues = sortedAreas.map(area => parseFloat(area.executed) || 0);
       const pendingValues = sortedAreas.map(area => parseFloat(area.pending) || 0);
       const overdueValues = sortedAreas.map(area => parseFloat(area.overdue) || 0);
-
+      console.log("Valor executado:", executedValues)
       const datasets = [
         {
           label: 'Executado',
