@@ -118,22 +118,18 @@ export default defineComponent({
         return;
       }
 
-      // 1. Extrair meses (labels) e áreas
       const months = Object.keys(this.data).sort((a, b) => parseInt(a) - parseInt(b));
       const areas = new Set();
       
-      // Percorrer todos os meses para coletar todas as áreas existentes
       months.forEach(month => {
         Object.keys(this.data[month]).forEach(area => {
           areas.add(area);
         });
       });
 
-      // 2. Mapear os dados para o formato do Chart.js
       const datasets = Array.from(areas).map((area, index) => {
         const color = this.areaColors[area] || this.colors[index % this.colors.length];
         
-        // Para cada área, criar um array de valores por mês
         const areaData = months.map(month => {
           return this.data[month][area] || 0; // Se não existir o valor, usar 0
         });
@@ -148,7 +144,6 @@ export default defineComponent({
         };
       });
 
-      // 3. Converter números de mês para nomes (ex: "1" -> "Jan/2023")
       const monthNames = [
         'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
@@ -158,12 +153,10 @@ export default defineComponent({
         return `${monthNames[parseInt(month) - 1]}`;
       });
 
-      // 4. Calcular o valor total para as porcentagens no tooltip
       const totalValue = months.reduce((sum, month) => {
         return sum + Object.values(this.data[month]).reduce((areaSum, val) => areaSum + val, 0);
       }, 0);
 
-      // 5. Configurar os dados e opções do gráfico
       this.chartData = {
         labels,
         datasets,

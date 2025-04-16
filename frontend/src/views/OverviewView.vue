@@ -169,6 +169,56 @@
         <v-col cols="12">
           <v-card class="mb-4">
             <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
+              <v-icon size="small" size-sm="default" class="mr-2">mdi-pin</v-icon>
+              Resumo Qualitativo dos Projetos
+            </v-card-title>
+            <v-card-text class="pa-1 pa-sm-3">
+              <v-data-table
+                :headers="headers"
+                :items="areasSummary"
+                class="elevation-1"
+                density="compact"
+                hide-default-footer
+                >
+                <template v-slot:item.budget="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.budget) }}</span>
+                </template>
+                <template v-slot:item.executed="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.executed) }}</span>
+                </template>
+                <template v-slot:item.pending="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.pending) }}</span>
+                </template>
+                <template v-slot:item.overdue="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.overdue) }}</span>
+                </template>
+                <template v-slot:item.progress="{ item }">
+                  <div class="text-center">
+                    <v-progress-linear
+                      :model-value="item.progress"
+                      :color="getProgressColor(item.progress)"
+                      height="16"
+                      height-sm="20"
+                      rounded
+                      striped
+                    >
+                      <template v-slot:default="{ value }">
+                        <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
+                      </template>
+                    </v-progress-linear>
+                  </div>
+                </template>
+              </v-data-table>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card class="mb-4">
+            <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
               <v-icon size="small" size-sm="default" class="mr-2">mdi-chart-timeline-variant</v-icon>
               Detalhamento da Destinação
             </v-card-title>
@@ -463,15 +513,15 @@ export default {
       },
       {
         id: 'area_distribution',
-        name: 'Distribuição de Ressarcimentos por Área',
+        name: 'Distribuição dos Ressarcimentos Executados por Área',
         shortName: 'Área',
         icon: 'mdi-chart-bar',
         component: 'bar-chart',
         props: { 
           data: computed(() => overview.value?.monthly_area_summary), 
-          graphTitle: 'Distribuição de Ressarcimentos por Área'
+          graphTitle: 'Distribuição de Ressarcimentos Executados por Área'
         },
-        title: 'Distribuição de Ressarcimentos por Área',
+        title: 'Distribuição de Ressarcimentos Executados por Área',
         subtitle: 'Valores executados por área de investimento'
       },
       {
@@ -530,7 +580,7 @@ export default {
     });
 
     onMounted(async () => {
-      await fetchProject();
+       await fetchProject(selectedYear.value);
       updateAvailableYears();
       await fetchOverview(selectedYear.value);
     });
