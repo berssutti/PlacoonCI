@@ -106,6 +106,20 @@ class InstallmentSerializer(serializers.ModelSerializer):
             area_values[project_area.area.name] = amount_decimal * (project_area.percentage / Decimal("100"))
         return area_values
 
+class ProjectSummarySerializer(serializers.Serializer):
+    name = serializers.CharField()
+    expected = serializers.FloatField()
+    executed = serializers.FloatField()
+    pending = serializers.FloatField()
+    overdue = serializers.FloatField()
+    coordinator = serializers.CharField()
+    start_date = serializers.CharField()
+    areas = serializers.ListField(
+        child=serializers.CharField(),
+        allow_empty=True
+    )
+    total_installments = serializers.IntegerField()
+
 class OverviewSerializer(serializers.Serializer):
     total_expected = serializers.FloatField()
     total_executed = serializers.FloatField()
@@ -129,12 +143,7 @@ class OverviewSerializer(serializers.Serializer):
         child=serializers.FloatField(),
         allow_empty=True
     )
-    projects_summary = serializers.ListField(
-        child=serializers.DictField(
-            child=serializers.CharField(),
-            allow_empty=True
-        )
-    )
+    projects_summary = ProjectSummarySerializer(many=True)
     monthly_summary = serializers.DictField(
         child=serializers.FloatField(),
         allow_empty=True

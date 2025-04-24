@@ -125,7 +125,7 @@
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
               <v-data-table
-                :headers="headers"
+                :headers="headersAreasSummary"
                 :items="areasSummary"
                 class="elevation-1"
                 density="compact"
@@ -170,42 +170,19 @@
           <v-card class="mb-4">
             <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
               <v-icon size="small" size-sm="default" class="mr-2">mdi-pin</v-icon>
-              Resumo Qualitativo dos Projetos
+              Resumo dos Projetos
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
               <v-data-table
-                :headers="headers"
-                :items="areasSummary"
+                :headers="headersProjectsSummary"
+                :items="projectsSummary"
                 class="elevation-1"
                 density="compact"
                 hide-default-footer
                 >
-                <template v-slot:item.budget="{ item }">
-                  <span class="text-end">{{ formatCurrency(item.budget) }}</span>
-                </template>
-                <template v-slot:item.executed="{ item }">
-                  <span class="text-end">{{ formatCurrency(item.executed) }}</span>
-                </template>
-                <template v-slot:item.pending="{ item }">
-                  <span class="text-end">{{ formatCurrency(item.pending) }}</span>
-                </template>
-                <template v-slot:item.overdue="{ item }">
-                  <span class="text-end">{{ formatCurrency(item.overdue) }}</span>
-                </template>
-                <template v-slot:item.progress="{ item }">
-                  <div class="text-center">
-                    <v-progress-linear
-                      :model-value="item.progress"
-                      :color="getProgressColor(item.progress)"
-                      height="16"
-                      height-sm="20"
-                      rounded
-                      striped
-                    >
-                      <template v-slot:default="{ value }">
-                        <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
-                      </template>
-                    </v-progress-linear>
+                <template v-slot:item.areas="{ item }">
+                  <div class="text-caption">
+                    {{ formatAreas(item.areas) }}
                   </div>
                 </template>
               </v-data-table>
@@ -363,7 +340,7 @@ export default {
     const availableYears = ref([]);
     const activeTab = ref('institution');
 
-    const headers = [
+    const headersAreasSummary = [
       { title: "Área", key: "name", align: "start" },
       { title: "Orçamento", key: "budget", align: "end" },
       { title: "Executado", key: "executed", align: "end" },
@@ -372,11 +349,26 @@ export default {
       { title: "Progresso", key: "progress", align: "center" },
     ];
 
+    const headersProjectsSummary = [
+      { title: "Data de Início", key: "start_date", align: "end" },
+      { title: "Projeto", key: "name", align: "start" },
+      { title: "Coordenador", key: "coordinator", align: "end" },
+      { title: "Areas", key: "areas", align: "end" },
+      { title: "Ressarcimento Total Esperado", key: "expected", align: "end" },
+      { title: "Quantidade de Parcelas", key: "total_installments", align: "center" },
+    ];
+
+    const formatAreas = (areas) => {
+      return areas.join(', ');
+    };
+
     const updateAvailableYears = () => {
       if (!project.value || project.value.length === 0) {
         availableYears.value = [new Date().getFullYear()];
         return;
       }
+    
+
 
       const years = new Set();
       project.value.forEach(proj => {
@@ -409,6 +401,7 @@ export default {
       windowWidth.value = window.innerWidth;
       chartHeight.value = getChartHeight();
     }
+
 
     onMounted(() => {
       window.addEventListener('resize', handleResize);
@@ -557,10 +550,10 @@ export default {
           props[key] = value;
         }
       });
-      
+
       props.responsive = true;
       props.maintainAspectRatio = false;
-      
+
       return props;
     });
 
@@ -580,12 +573,11 @@ export default {
     });
 
     onMounted(async () => {
-       await fetchProject(selectedYear.value);
+      await fetchProject();
       updateAvailableYears();
       await fetchOverview(selectedYear.value);
     });
 
-    // Watch for changes in project data to update available years
     watch(() => project.value, () => {
       updateAvailableYears();
     }, { deep: true });
@@ -638,8 +630,10 @@ export default {
     return {
       allInstallments,
       areasSummary,
-      headers,
+      headersAreasSummary,
+      headersProjectsSummary,
       formatCurrency,
+      formatAreas,
       getProgressColor,
       completedAreasSummary,
       pendingAreasSummary,
