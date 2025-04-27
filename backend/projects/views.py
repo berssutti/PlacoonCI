@@ -22,13 +22,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 start_of_year = datetime(year, 1, 1)
                 end_of_year = datetime(year, 12, 31)
                 
-                # Filter projects that were active during the specified year
                 queryset = queryset.filter(
                     Q(start_date__lte=end_of_year) &  # Started before or during the year
                     (Q(end_date__gte=start_of_year) | Q(end_date__isnull=True))  # Ended after or during the year
                 )
             except ValueError:
-                # If year is not a valid integer, return all projects
                 pass
                 
         return queryset
@@ -87,17 +85,28 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project_pending_installments = pending_installments.filter(project=project)
             project_overdue_installments = overdue_installments.filter(project=project)
             
+            total_installments = (project_installments.count() +
+                                  project_pending_installments.count() +
+                                  project_overdue_installments.count())
+            
             project_executed = float(sum(installment.amount or 0 for installment in project_installments))
             project_pending = float(sum(installment.amount or 0 for installment in project_pending_installments))
             project_overdue = float(sum(installment.amount or 0 for installment in project_overdue_installments))
             project_expected = project_executed + project_pending + project_overdue
+            project_coordinator = project.coordinator if project.coordinator else 'Não especificado'
+            project_start_date = project.start_date.strftime('%d/%m/%Y') if project.start_date else 'Não especificado'
+            areas_name_list = [project_area.area.name for project_area in project.projectarea_set.all()]
 
             projects_summary.append({
                 'name': project.name,
                 'expected': project_expected,
                 'executed': project_executed,
                 'pending': project_pending,
-                'overdue': project_overdue
+                'overdue': project_overdue,
+                'coordinator': project_coordinator,
+                'start_date': project_start_date,
+                'areas': areas_name_list,
+                'total_installments': total_installments
             })
 
         areas_summary = []

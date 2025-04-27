@@ -145,19 +145,16 @@ export default defineComponent({
         return;
       }
 
-      // Converter objeto de meses em arrays ordenados
       const months = Object.keys(props.data)
         .map(month => parseInt(month))
         .sort((a, b) => a - b);
 
-      // Nomes dos meses abreviados
       const monthNames = [
         'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
       ];
 
-      const currentYear = new Date().getFullYear();
-      const labels = months.map(month => `${monthNames[month - 1]}/${currentYear}`);
+      const labels = months.map(month => `${monthNames[month - 1]}`);
       const values = months.map(month => parseFloat(props.data[month]) || 0);
 
       chartData.value = {

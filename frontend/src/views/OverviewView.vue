@@ -9,16 +9,9 @@
               <span class="text-h4 text-sm-h4 text-md-h4 primary--text">Visão Geral dos Ressarcimentos</span>
             </div>
             <v-spacer></v-spacer>
-            <v-select
-              v-model="selectedYear"
-              :items="availableYears"
-              label="Ano"
-              class="mt-2 mt-sm-0 align-self-center"
-              style="max-width: 150px;"
-              density="compact"
-              variant="outlined"
-              @update:model-value="handleYearChange"
-            ></v-select>
+            <v-select v-model="selectedYear" :items="availableYears" label="Ano" class="mt-2 mt-sm-0 align-self-center"
+              style="max-width: 150px;" density="compact" variant="outlined"
+              @update:model-value="handleYearChange"></v-select>
           </v-card-title>
         </v-card>
       </v-col>
@@ -75,46 +68,29 @@
 
       <v-row class="mt-4">
         <v-col cols="12">
-          <v-card class="mb-4">
-            <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
-              <v-icon size="small" size-sm="default" class="mr-2">mdi-cash-multiple</v-icon>
-              Resumo Financeiro por Área
+          <v-card elevation="2" class="rounded-lg">
+            <v-card-title class="text-subtitle-1 text-sm-h6">
+              <v-icon size="small" size-sm="default" class="mr-2">{{ getSelectedGraphIcon }}</v-icon>
+              {{ getSelectedGraphTitle }}
             </v-card-title>
-            <v-card-text class="pa-1 pa-sm-3">
-              <div class="table-responsive">
-                <v-table class="elevation-1" density="compact" density-sm="default">
-                  <thead>
-                    <tr>
-                      <th v-for="header in headers" :key="header.key" :class="header.align">
-                        {{ header.title }}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="area in areasSummary" :key="area.name">
-                      <td>{{ area.name }}</td>
-                      <td class="text-end">{{ formatCurrency(area.budget) }}</td>
-                      <td class="text-end">{{ formatCurrency(area.executed) }}</td>
-                      <td class="text-end">{{ formatCurrency(area.pending) }}</td>
-                      <td class="text-end">{{ formatCurrency(area.overdue) }}</td>
-                      <td class="text-center">
-                        <v-progress-linear
-                          :model-value="area.progress"
-                          :color="getProgressColor(area.progress)"
-                          height="16"
-                          height-sm="20"
-                          rounded
-                          striped
-                        >
-                          <template v-slot:default="{ value }">
-                            <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
-                          </template>
-                        </v-progress-linear>
-                      </td>
-                    </tr>
-                  </tbody>
-                </v-table>
-              </div>
+            <v-card-subtitle class="pb-0">{{ getSelectedGraphSubtitle }}</v-card-subtitle>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" class="d-flex justify-center mb-2 mb-sm-4">
+                  <v-btn-group class="flex-wrap">
+                    <v-btn v-for="graph in graphs" :key="graph.id" :color="selectedGraph === graph.id ? 'primary' : ''"
+                      @click="selectedGraph = graph.id" class="ma-1" variant="outlined" size="x-small" size-sm="small"
+                      density="compact" density-sm="default">
+                      <v-icon size="x-small" size-sm="small" class="mr-0 mr-sm-1">{{ graph.icon }}</v-icon>
+                      <span class="d-none d-sm-inline">{{ graph.name }}</span>
+                      <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) + '...' }}</span>
+                    </v-btn>
+                  </v-btn-group>
+                </v-col>
+                <v-col cols="12">
+                  <component :is="getSelectedGraphComponent" v-bind="getSelectedGraphProps" :height="chartHeight" />
+                </v-col>
+              </v-row>
             </v-card-text>
           </v-card>
         </v-col>
@@ -124,8 +100,68 @@
         <v-col cols="12">
           <v-card class="mb-4">
             <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
+              <v-icon size="small" size-sm="default" class="mr-2">mdi-cash-multiple</v-icon>
+              Resumo Financeiro por Área
+            </v-card-title>
+            <v-card-text class="pa-1 pa-sm-3">
+              <v-data-table :headers="headersAreasSummary" :items="areasSummary" class="elevation-1" density="compact"
+                hide-default-footer>
+                <template v-slot:item.budget="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.budget) }}</span>
+                </template>
+                <template v-slot:item.executed="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.executed) }}</span>
+                </template>
+                <template v-slot:item.pending="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.pending) }}</span>
+                </template>
+                <template v-slot:item.overdue="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.overdue) }}</span>
+                </template>
+                <template v-slot:item.progress="{ item }">
+                  <div class="text-center">
+                    <v-progress-linear :model-value="item.progress" :color="getProgressColor(item.progress)" height="16"
+                      height-sm="20" rounded striped>
+                      <template v-slot:default="{ value }">
+                        <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
+                      </template>
+                    </v-progress-linear>
+                  </div>
+                </template>
+              </v-data-table>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card class="mb-4">
+            <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
+              <v-icon size="small" size-sm="default" class="mr-2">mdi-pin</v-icon>
+              Resumo dos Projetos
+            </v-card-title>
+            <v-card-text class="pa-1 pa-sm-3">
+              <v-data-table :headers="headersProjectsSummary" :items="projectsSummary" class="elevation-1"
+                density="compact" hide-default-footer>
+                <template v-slot:item.areas="{ item }">
+                  <div class="text-caption">
+                    {{ formatAreas(item.areas) }}
+                  </div>
+                </template>
+              </v-data-table>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card class="mb-4">
+            <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
               <v-icon size="small" size-sm="default" class="mr-2">mdi-chart-timeline-variant</v-icon>
-              Detalhamento Financeiro
+              Detalhamento da Destinação
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
               <v-tabs v-model="activeTab" color="primary">
@@ -203,7 +239,8 @@
                               <v-list-item v-for="area in areasSummary" :key="area.name">
                                 <v-list-item-title>{{ area.name }}</v-list-item-title>
                                 <template v-slot:append>
-                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.budget) }}</span>
+                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.budget)
+                                    }}</span>
                                 </template>
                               </v-list-item>
                             </v-list>
@@ -216,7 +253,8 @@
                               <v-list-item v-for="area in areasSummary" :key="area.name">
                                 <v-list-item-title>{{ area.name }}</v-list-item-title>
                                 <template v-slot:append>
-                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.executed) }}</span>
+                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.executed)
+                                    }}</span>
                                 </template>
                               </v-list-item>
                             </v-list>
@@ -232,48 +270,6 @@
         </v-col>
       </v-row>
 
-      <v-row class="mt-4">
-        <v-col cols="12">
-          <v-card elevation="2" class="rounded-lg">
-            <v-card-title class="text-subtitle-1 text-sm-h6">
-              <v-icon size="small" size-sm="default" class="mr-2">{{ getSelectedGraphIcon }}</v-icon>
-              {{ getSelectedGraphTitle }}
-            </v-card-title>
-            <v-card-subtitle class="pb-0">{{ getSelectedGraphSubtitle }}</v-card-subtitle>
-            <v-card-text>
-              <v-row>
-                <v-col cols="12" class="d-flex justify-center mb-2 mb-sm-4">
-                  <v-btn-group class="flex-wrap">
-                    <v-btn
-                      v-for="graph in graphs"
-                      :key="graph.id"
-                      :color="selectedGraph === graph.id ? 'primary' : ''"
-                      @click="selectedGraph = graph.id"
-                      class="ma-1"
-                      variant="outlined"
-                      size="x-small"
-                      size-sm="small"
-                      density="compact"
-                      density-sm="default"
-                    >
-                      <v-icon size="x-small" size-sm="small" class="mr-0 mr-sm-1">{{ graph.icon }}</v-icon>
-                      <span class="d-none d-sm-inline">{{ graph.name }}</span>
-                      <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) + '...' }}</span>
-                    </v-btn>
-                  </v-btn-group>
-                </v-col>
-                <v-col cols="12">
-                  <component
-                    :is="getSelectedGraphComponent"
-                    v-bind="getSelectedGraphProps"
-                    :height="chartHeight"
-                  />
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
     </template>
   </v-container>
 </template>
@@ -310,7 +306,7 @@ export default {
     const availableYears = ref([]);
     const activeTab = ref('institution');
 
-    const headers = [
+    const headersAreasSummary = [
       { title: "Área", key: "name", align: "start" },
       { title: "Orçamento", key: "budget", align: "end" },
       { title: "Executado", key: "executed", align: "end" },
@@ -319,24 +315,39 @@ export default {
       { title: "Progresso", key: "progress", align: "center" },
     ];
 
+    const headersProjectsSummary = [
+      { title: "Data de Início", key: "start_date", align: "start" },
+      { title: "Projeto", key: "name", align: "start" },
+      { title: "Coordenador", key: "coordinator", align: "start" },
+      { title: "Areas", key: "areas", align: "start" },
+      { title: "Ressarcimento Total Esperado", key: "expected", align: "start" },
+      { title: "Quantidade de Parcelas", key: "total_installments", align: "start" },
+    ];
+
+    const formatAreas = (areas) => {
+      return areas.join(', ');
+    };
+
     const updateAvailableYears = () => {
       if (!project.value || project.value.length === 0) {
         availableYears.value = [new Date().getFullYear()];
         return;
       }
 
+
+
       const years = new Set();
       project.value.forEach(proj => {
         const startYear = new Date(proj.start_date).getFullYear();
         const endYear = new Date(proj.end_date).getFullYear();
-        
+
         for (let year = startYear; year <= endYear; year++) {
           years.add(year);
         }
       });
 
       availableYears.value = Array.from(years).sort((a, b) => b - a);
-      
+
       if (!availableYears.value.includes(selectedYear.value)) {
         selectedYear.value = availableYears.value[0];
       }
@@ -356,6 +367,7 @@ export default {
       windowWidth.value = window.innerWidth;
       chartHeight.value = getChartHeight();
     }
+
 
     onMounted(() => {
       window.addEventListener('resize', handleResize);
@@ -397,7 +409,7 @@ export default {
 
     const overdueAreasSummary = computed(() => {
       const summary = {};
-      
+
       if (!allInstallments.value) return [];
 
       allInstallments.value.forEach((installment) => {
@@ -434,24 +446,24 @@ export default {
     const graphs = [
       {
         id: 'status',
-        name: 'Estados das Parcelas por Área',
+        name: 'Estágios das Parcelas por Área',
         shortName: 'Est',
-        icon: 'mdi-chart-bar-stacked',
-        component: 'status-distribution-chart',
-        props: { 
+        icon: 'mdi-chart-bar',
+        component: 'grouped-bar-chart',
+        props: {
           data: computed(() => overview.value?.areas_summary),
-          graphTitle: 'Distribuição de Estados das Parcelas por Área'
+          graphTitle: 'Distribuição de Estágios das Parcelas por Área'
         },
-        title: 'Distribuição de Estados das Parcelas por Área',
-        subtitle: 'Estados das parcelas por área de investimento'
+        title: 'Distribuição de Estágios das Parcelas por Área',
+        subtitle: 'Estágios das parcelas por área de investimento'
       },
       {
         id: 'grouped_bar',
         name: 'Ressarcimentos por Projeto',
         shortName: 'Proj',
-        icon: 'mdi-chart-bar',
-        component: 'grouped-bar-chart',
-        props: { 
+        icon: 'mdi-chart-bar-stacked',
+        component: 'status-distribution-chart',
+        props: {
           data: computed(() => overview.value?.projects_summary),
           graphTitle: 'Valores dos Ressarcimentos por Projeto'
         },
@@ -460,15 +472,15 @@ export default {
       },
       {
         id: 'area_distribution',
-        name: 'Distribuição de Ressarcimentos por Área',
+        name: 'Distribuição dos Ressarcimentos Executados por Área',
         shortName: 'Área',
         icon: 'mdi-chart-bar',
         component: 'bar-chart',
-        props: { 
-          data: computed(() => overview.value?.monthly_area_summary), 
-          graphTitle: 'Distribuição de Ressarcimentos por Área'
+        props: {
+          data: computed(() => overview.value?.monthly_area_summary),
+          graphTitle: 'Distribuição de Ressarcimentos Executados por Área'
         },
-        title: 'Distribuição de Ressarcimentos por Área',
+        title: 'Distribuição de Ressarcimentos Executados por Área',
         subtitle: 'Valores executados por área de investimento'
       },
       {
@@ -477,7 +489,7 @@ export default {
         shortName: 'Evol',
         icon: 'mdi-chart-line',
         component: 'line-chart',
-        props: { 
+        props: {
           data: computed(() => overview.value?.monthly_summary),
           graphTitle: 'Evolução dos Ressarcimentos Executados'
         },
@@ -504,10 +516,10 @@ export default {
           props[key] = value;
         }
       });
-      
+
       props.responsive = true;
       props.maintainAspectRatio = false;
-      
+
       return props;
     });
 
@@ -532,7 +544,6 @@ export default {
       await fetchOverview(selectedYear.value);
     });
 
-    // Watch for changes in project data to update available years
     watch(() => project.value, () => {
       updateAvailableYears();
     }, { deep: true });
@@ -585,8 +596,10 @@ export default {
     return {
       allInstallments,
       areasSummary,
-      headers,
+      headersAreasSummary,
+      headersProjectsSummary,
       formatCurrency,
+      formatAreas,
       getProgressColor,
       completedAreasSummary,
       pendingAreasSummary,
@@ -684,20 +697,20 @@ export default {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .v-card-title {
     font-size: 1.25rem !important;
   }
-  
+
   .v-table {
     font-size: 0.75rem;
   }
-  
+
   .v-table thead th {
     padding: 8px !important;
     font-size: 0.7rem;
   }
-  
+
   .v-table tbody td {
     padding: 6px !important;
   }
@@ -707,7 +720,7 @@ export default {
   .v-table thead th {
     padding: 10px !important;
   }
-  
+
   .v-table tbody td {
     padding: 8px !important;
   }
