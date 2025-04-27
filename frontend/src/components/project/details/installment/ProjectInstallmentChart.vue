@@ -7,85 +7,39 @@
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-      
       <v-divider></v-divider>
-      
       <v-card-text class="pa-4">
         <v-row>
           <v-col cols="12" class="pb-0">
             <div class="d-flex justify-space-between align-center flex-wrap">
               <div class="summary-info">
                 <div><strong>Total de Parcelas:</strong> {{ installments.length }}</div>
-                <div><strong>Pendentes:</strong> {{ pendingInstallments.length }}</div>
                 <div><strong>Quitadas:</strong> {{ paidInstallments.length }}</div>
+                <div><strong>Pendentes:</strong> {{ pendingInstallments.length }}</div>
+                <div><strong>Atrasadas:</strong> {{ lateInstallments.length }}</div>
               </div>
-              
-              <v-btn-toggle
-                v-model="selectedView"
-                mandatory
-                class="mt-2 mt-sm-0"
-                dense
-                outlined
-              >
-                <v-btn value="both" small>Ambos</v-btn>
-                <v-btn value="pending" small>Apenas Pendentes</v-btn>
-                <v-btn value="paid" small>Apenas Quitadas</v-btn>
+              <v-btn-toggle v-model="selectedView" mandatory class="mt-2 mt-sm-0" dense outlined>
+                <v-btn value="paid" small>Quitadas</v-btn>
+                <v-btn value="pending" small>Pendentes</v-btn>
+                <v-btn value="late" small>Atrasadas</v-btn>
               </v-btn-toggle>
             </div>
           </v-col>
         </v-row>
-        
         <v-row class="mt-2">
-          <template v-if="selectedView === 'both'">
-            <v-col cols="12" md="6">
-              <div v-if="pendingInstallments.length > 0">
-                <stacked-bar-chart :installments="pendingInstallments" :graphTitle="pendingTitle"/>
-              </div>
-              <v-card v-else class="pa-6 d-flex justify-center align-center" height="450">
-                <div class="text-center">
-                  <v-icon large color="grey lighten-1">mdi-chart-bar</v-icon>
-                  <p class="text-subtitle-1 mt-2 grey--text">Não há parcelas pendentes para exibir</p>
-                </div>
-              </v-card>
-            </v-col>
-            <v-col cols="12" md="6">
-              <div v-if="paidInstallments.length > 0">
-                <stacked-bar-chart :installments="paidInstallments" :graphTitle="paidTitle"/>
-              </div>
-              <v-card v-else class="pa-6 d-flex justify-center align-center" height="450">
-                <div class="text-center">
-                  <v-icon large color="grey lighten-1">mdi-chart-bar</v-icon>
-                  <p class="text-subtitle-1 mt-2 grey--text">Não há parcelas quitadas para exibir</p>
-                </div>
-              </v-card>
+          <template v-if="selectedView === 'paid'">
+            <v-col cols="12">
+              <area-stacked-bar-chart :installments="paidInstallments" :graphTitle="paidTitle" />
             </v-col>
           </template>
-          
           <template v-else-if="selectedView === 'pending'">
             <v-col cols="12">
-              <div v-if="pendingInstallments.length > 0">
-                <stacked-bar-chart :installments="pendingInstallments" :graphTitle="pendingTitle"/>
-              </div>
-              <v-card v-else class="pa-6 d-flex justify-center align-center" height="450">
-                <div class="text-center">
-                  <v-icon large color="grey lighten-1">mdi-chart-bar</v-icon>
-                  <p class="text-subtitle-1 mt-2 grey--text">Não há parcelas pendentes para exibir</p>
-                </div>
-              </v-card>
+              <area-stacked-bar-chart :installments="pendingInstallments" :graphTitle="pendingTitle" />
             </v-col>
           </template>
-          
-          <template v-else-if="selectedView === 'paid'">
+          <template v-else-if="selectedView === 'late'">
             <v-col cols="12">
-              <div v-if="paidInstallments.length > 0">
-                <stacked-bar-chart :installments="paidInstallments" :graphTitle="paidTitle"/>
-              </div>
-              <v-card v-else class="pa-6 d-flex justify-center align-center" height="450">
-                <div class="text-center">
-                  <v-icon large color="grey lighten-1">mdi-chart-bar</v-icon>
-                  <p class="text-subtitle-1 mt-2 grey--text">Não há parcelas quitadas para exibir</p>
-                </div>
-              </v-card>
+              <area-stacked-bar-chart :installments="lateInstallments" :graphTitle="lateTitle" />
             </v-col>
           </template>
         </v-row>
@@ -95,41 +49,57 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import StackedBarChart from '@/components/shared/charts/BarChart.vue';
+import { ref, computed } from 'vue';
+import AreaStackedBarChart from './chart/StackedBarChart.vue';
 
 export default {
   name: 'ChartModal',
-
   components: {
-    StackedBarChart,
+    AreaStackedBarChart,
   },
-
   props: {
     installments: {
       type: Array,
       required: true,
     },
   },
-
   setup(props, { emit }) {
-    const selectedView = ref('both');
-    
-    const pendingInstallments = props.installments.filter(installment => installment.status == 'Pendente');
-    const paidInstallments = props.installments.filter(installment => installment.status == 'Quitada');
+    // Definir a visualização padrão como 'paid' (quitadas primeiro)
+    const selectedView = ref('paid');
 
-    const pendingTitle = "Distribuição de Parcelas Pendentes por Área";
+    // Filtrar parcelas por status
+    const paidInstallments = computed(() =>
+      props.installments.filter(installment => installment.status === 'Quitada')
+    );
+
+    const pendingInstallments = computed(() =>
+      props.installments.filter(installment => installment.status === 'Pendente')
+    );
+
+    const lateInstallments = computed(() => {
+      const today = new Date();
+      return props.installments.filter(installment => {
+        // Considera atrasada se for pendente e a data estimada já passou
+        return installment.status === 'Atrasada';
+      });
+    });
+
+    // Títulos dos gráficos
     const paidTitle = "Distribuição de Parcelas Quitadas por Área";
+    const pendingTitle = "Distribuição de Parcelas Pendentes por Área";
+    const lateTitle = "Distribuição de Parcelas Atrasadas por Área";
 
     const emitClose = () => {
       emit('close', false)
     };
 
     return {
-      pendingInstallments,
       paidInstallments,
-      pendingTitle,
+      pendingInstallments,
+      lateInstallments,
       paidTitle,
+      pendingTitle,
+      lateTitle,
       emitClose,
       selectedView,
     };

@@ -9,16 +9,9 @@
               <span class="text-h4 text-sm-h4 text-md-h4 primary--text">Visão Geral dos Ressarcimentos</span>
             </div>
             <v-spacer></v-spacer>
-            <v-select
-              v-model="selectedYear"
-              :items="availableYears"
-              label="Ano"
-              class="mt-2 mt-sm-0 align-self-center"
-              style="max-width: 150px;"
-              density="compact"
-              variant="outlined"
-              @update:model-value="handleYearChange"
-            ></v-select>
+            <v-select v-model="selectedYear" :items="availableYears" label="Ano" class="mt-2 mt-sm-0 align-self-center"
+              style="max-width: 150px;" density="compact" variant="outlined"
+              @update:model-value="handleYearChange"></v-select>
           </v-card-title>
         </v-card>
       </v-col>
@@ -85,18 +78,9 @@
               <v-row>
                 <v-col cols="12" class="d-flex justify-center mb-2 mb-sm-4">
                   <v-btn-group class="flex-wrap">
-                    <v-btn
-                      v-for="graph in graphs"
-                      :key="graph.id"
-                      :color="selectedGraph === graph.id ? 'primary' : ''"
-                      @click="selectedGraph = graph.id"
-                      class="ma-1"
-                      variant="outlined"
-                      size="x-small"
-                      size-sm="small"
-                      density="compact"
-                      density-sm="default"
-                    >
+                    <v-btn v-for="graph in graphs" :key="graph.id" :color="selectedGraph === graph.id ? 'primary' : ''"
+                      @click="selectedGraph = graph.id" class="ma-1" variant="outlined" size="x-small" size-sm="small"
+                      density="compact" density-sm="default">
                       <v-icon size="x-small" size-sm="small" class="mr-0 mr-sm-1">{{ graph.icon }}</v-icon>
                       <span class="d-none d-sm-inline">{{ graph.name }}</span>
                       <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) + '...' }}</span>
@@ -104,11 +88,7 @@
                   </v-btn-group>
                 </v-col>
                 <v-col cols="12">
-                  <component
-                    :is="getSelectedGraphComponent"
-                    v-bind="getSelectedGraphProps"
-                    :height="chartHeight"
-                  />
+                  <component :is="getSelectedGraphComponent" v-bind="getSelectedGraphProps" :height="chartHeight" />
                 </v-col>
               </v-row>
             </v-card-text>
@@ -124,13 +104,8 @@
               Resumo Financeiro por Área
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
-              <v-data-table
-                :headers="headersAreasSummary"
-                :items="areasSummary"
-                class="elevation-1"
-                density="compact"
-                hide-default-footer
-                >
+              <v-data-table :headers="headersAreasSummary" :items="areasSummary" class="elevation-1" density="compact"
+                hide-default-footer>
                 <template v-slot:item.budget="{ item }">
                   <span class="text-end">{{ formatCurrency(item.budget) }}</span>
                 </template>
@@ -145,14 +120,8 @@
                 </template>
                 <template v-slot:item.progress="{ item }">
                   <div class="text-center">
-                    <v-progress-linear
-                      :model-value="item.progress"
-                      :color="getProgressColor(item.progress)"
-                      height="16"
-                      height-sm="20"
-                      rounded
-                      striped
-                    >
+                    <v-progress-linear :model-value="item.progress" :color="getProgressColor(item.progress)" height="16"
+                      height-sm="20" rounded striped>
                       <template v-slot:default="{ value }">
                         <strong class="text-caption text-sm-body-2">{{ Math.ceil(value) }}%</strong>
                       </template>
@@ -173,13 +142,8 @@
               Resumo dos Projetos
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
-              <v-data-table
-                :headers="headersProjectsSummary"
-                :items="projectsSummary"
-                class="elevation-1"
-                density="compact"
-                hide-default-footer
-                >
+              <v-data-table :headers="headersProjectsSummary" :items="projectsSummary" class="elevation-1"
+                density="compact" hide-default-footer>
                 <template v-slot:item.areas="{ item }">
                   <div class="text-caption">
                     {{ formatAreas(item.areas) }}
@@ -275,7 +239,8 @@
                               <v-list-item v-for="area in areasSummary" :key="area.name">
                                 <v-list-item-title>{{ area.name }}</v-list-item-title>
                                 <template v-slot:append>
-                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.budget) }}</span>
+                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.budget)
+                                    }}</span>
                                 </template>
                               </v-list-item>
                             </v-list>
@@ -288,7 +253,8 @@
                               <v-list-item v-for="area in areasSummary" :key="area.name">
                                 <v-list-item-title>{{ area.name }}</v-list-item-title>
                                 <template v-slot:append>
-                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.executed) }}</span>
+                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.executed)
+                                    }}</span>
                                 </template>
                               </v-list-item>
                             </v-list>
@@ -350,12 +316,12 @@ export default {
     ];
 
     const headersProjectsSummary = [
-      { title: "Data de Início", key: "start_date", align: "end" },
+      { title: "Data de Início", key: "start_date", align: "start" },
       { title: "Projeto", key: "name", align: "start" },
-      { title: "Coordenador", key: "coordinator", align: "end" },
-      { title: "Areas", key: "areas", align: "end" },
-      { title: "Ressarcimento Total Esperado", key: "expected", align: "end" },
-      { title: "Quantidade de Parcelas", key: "total_installments", align: "center" },
+      { title: "Coordenador", key: "coordinator", align: "start" },
+      { title: "Areas", key: "areas", align: "start" },
+      { title: "Ressarcimento Total Esperado", key: "expected", align: "start" },
+      { title: "Quantidade de Parcelas", key: "total_installments", align: "start" },
     ];
 
     const formatAreas = (areas) => {
@@ -367,21 +333,21 @@ export default {
         availableYears.value = [new Date().getFullYear()];
         return;
       }
-    
+
 
 
       const years = new Set();
       project.value.forEach(proj => {
         const startYear = new Date(proj.start_date).getFullYear();
         const endYear = new Date(proj.end_date).getFullYear();
-        
+
         for (let year = startYear; year <= endYear; year++) {
           years.add(year);
         }
       });
 
       availableYears.value = Array.from(years).sort((a, b) => b - a);
-      
+
       if (!availableYears.value.includes(selectedYear.value)) {
         selectedYear.value = availableYears.value[0];
       }
@@ -443,7 +409,7 @@ export default {
 
     const overdueAreasSummary = computed(() => {
       const summary = {};
-      
+
       if (!allInstallments.value) return [];
 
       allInstallments.value.forEach((installment) => {
@@ -484,7 +450,7 @@ export default {
         shortName: 'Est',
         icon: 'mdi-chart-bar',
         component: 'grouped-bar-chart',
-        props: { 
+        props: {
           data: computed(() => overview.value?.areas_summary),
           graphTitle: 'Distribuição de Estágios das Parcelas por Área'
         },
@@ -497,7 +463,7 @@ export default {
         shortName: 'Proj',
         icon: 'mdi-chart-bar-stacked',
         component: 'status-distribution-chart',
-        props: { 
+        props: {
           data: computed(() => overview.value?.projects_summary),
           graphTitle: 'Valores dos Ressarcimentos por Projeto'
         },
@@ -510,8 +476,8 @@ export default {
         shortName: 'Área',
         icon: 'mdi-chart-bar',
         component: 'bar-chart',
-        props: { 
-          data: computed(() => overview.value?.monthly_area_summary), 
+        props: {
+          data: computed(() => overview.value?.monthly_area_summary),
           graphTitle: 'Distribuição de Ressarcimentos Executados por Área'
         },
         title: 'Distribuição de Ressarcimentos Executados por Área',
@@ -523,7 +489,7 @@ export default {
         shortName: 'Evol',
         icon: 'mdi-chart-line',
         component: 'line-chart',
-        props: { 
+        props: {
           data: computed(() => overview.value?.monthly_summary),
           graphTitle: 'Evolução dos Ressarcimentos Executados'
         },
@@ -731,20 +697,20 @@ export default {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .v-card-title {
     font-size: 1.25rem !important;
   }
-  
+
   .v-table {
     font-size: 0.75rem;
   }
-  
+
   .v-table thead th {
     padding: 8px !important;
     font-size: 0.7rem;
   }
-  
+
   .v-table tbody td {
     padding: 6px !important;
   }
@@ -754,7 +720,7 @@ export default {
   .v-table thead th {
     padding: 10px !important;
   }
-  
+
   .v-table tbody td {
     padding: 8px !important;
   }
