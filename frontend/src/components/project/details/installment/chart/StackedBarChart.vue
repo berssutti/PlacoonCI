@@ -1,4 +1,5 @@
 <template>
+    <!-- O template permanece o mesmo -->
     <div class="area-chart-container" :style="{ height: `${height}px` }">
         <h3 v-if="graphTitle" class="area-chart-title">{{ graphTitle }}</h3>
         <div class="area-chart-wrapper">
@@ -12,7 +13,7 @@
 </template>
 
 <script>
-import { defineComponent, computed, watch, onMounted, onBeforeUnmount, ref } from 'vue';
+import { defineComponent, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import {
     Chart as ChartJS,
     Title,
@@ -45,22 +46,16 @@ export default defineComponent({
         }
     },
     setup(props) {
-        // Debug
-        watch(() => props.installments, (newVal) => {
-            console.log("Processing chart data:", newVal);
-        }, { immediate: true, deep: true });
-
-        // Cores para diferentes áreas
+        // Cores para diferentes áreas (mantido igual)
         const areaColors = {
-            'Engenharia de Software': '#4CAF50',   // Verde
-            'Engenharia de Energia': '#FFC107',    // Amarelo
-            'Engenharia Eletrônica': '#2196F3',    // Azul
-            'Engenharia Aeroespacial': '#9C27B0',  // Roxo
-            'Engenharia Automotiva': '#F44336',    // Vermelho
-            'Outras Áreas': '#009688'              // Verde-azulado
+            'Engenharia de Software': '#4CAF50',
+            'Engenharia de Energia': '#FFC107',
+            'Engenharia Eletrônica': '#2196F3',
+            'Engenharia Aeroespacial': '#9C27B0',
+            'Engenharia Automotiva': '#F44336',
+            'Outras Áreas': '#009688'
         };
 
-        // Formatação de valores monetários
         const formatCurrency = (value) => {
             return new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
@@ -68,65 +63,68 @@ export default defineComponent({
             }).format(value);
         };
 
-        // Processar dados para o gráfico
         const chartData = computed(() => {
             if (!props.installments || props.installments.length === 0) {
                 return { labels: [], datasets: [] };
             }
 
             try {
-                // Agrupar instalações por mês
                 const monthlyData = {};
                 const allAreas = new Set();
 
+                // Processar cada parcela
                 props.installments.forEach(installment => {
-                    // Usar a data efetiva ou estimada
-                    const date = installment.effective_date || installment.estimated_date;
-                    if (!date) return;
+                    const dateStr = installment.effective_date || installment.estimated_date;
+                    if (!dateStr) return;
 
-                    const dateObj = new Date(date);
-                    const month = dateObj.getMonth() + 1; // 1-12 para representar meses
+                    // Extrair ano e mês da data no formato YYYY-MM-DD
+                    const [year, month] = dateStr.split('-').map(Number);
+                    const monthYearKey = `${year}-${month.toString().padStart(2, '0')}`;
 
-                    // Garantir que temos o mês criado no objeto
-                    if (!monthlyData[month]) {
-                        monthlyData[month] = {};
+                    if (!monthlyData[monthYearKey]) {
+                        monthlyData[monthYearKey] = {
+                            year,
+                            month,
+                            data: {}
+                        };
                     }
 
-                    // Processar cada área do objeto area_values
+                    // Processar valores por área
                     if (installment.area_values) {
                         Object.entries(installment.area_values).forEach(([area, value]) => {
-                            if (!monthlyData[month][area]) {
-                                monthlyData[month][area] = 0;
+                            if (!monthlyData[monthYearKey].data[area]) {
+                                monthlyData[monthYearKey].data[area] = 0;
                             }
-                            monthlyData[month][area] += parseFloat(value) || 0;
+                            monthlyData[monthYearKey].data[area] += parseFloat(value) || 0;
                             allAreas.add(area);
                         });
                     }
                 });
 
-                // Nomes dos meses para labels
+                // Nomes dos meses abreviados
                 const monthNames = [
-                    'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-                    'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+                    'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+                    'jul', 'ago', 'set', 'out', 'nov', 'dez'
                 ];
 
-                // Ordenar os meses numericamente
-                const sortedMonths = Object.keys(monthlyData)
-                    .map(Number)
-                    .sort((a, b) => a - b);
+                // Ordenar os dados por ano e mês
+                const sortedEntries = Object.entries(monthlyData).sort((a, b) => {
+                    if (a[1].year !== b[1].year) {
+                        return a[1].year - b[1].year;
+                    }
+                    return a[1].month - b[1].month;
+                });
 
-                // Gerar labels dos meses
-                const labels = sortedMonths.map(month => monthNames[month - 1]);
+                // Gerar labels no formato "abr/2025"
+                const labels = sortedEntries.map(([_, monthData]) => {
+                    const monthName = monthNames[monthData.month - 1];
+                    return `${monthName}/${monthData.year}`;
+                });
 
                 // Criar datasets para cada área
                 const datasets = Array.from(allAreas).map((area, index) => {
-                    // Selecionar cor da área ou usar fallback
                     const color = areaColors[area] || Object.values(areaColors)[index % Object.values(areaColors).length];
-
-                    // Dados para cada mês
-                    const data = sortedMonths.map(month => {
-                        return monthlyData[month][area] || 0;
-                    });
+                    const data = sortedEntries.map(([_, monthData]) => monthData.data[area] || 0);
 
                     return {
                         label: area,
@@ -145,10 +143,9 @@ export default defineComponent({
             }
         });
 
-        // Calcular total por mês para tooltips
+        // Restante do código permanece igual
         const getMonthlyTotals = computed(() => {
             const monthlyTotals = {};
-
             if (chartData.value && chartData.value.labels) {
                 chartData.value.labels.forEach((label, monthIndex) => {
                     let total = 0;
@@ -158,11 +155,9 @@ export default defineComponent({
                     monthlyTotals[monthIndex] = total;
                 });
             }
-
             return monthlyTotals;
         });
 
-        // Opções do gráfico
         const chartOptions = computed(() => ({
             responsive: true,
             maintainAspectRatio: false,
@@ -187,15 +182,11 @@ export default defineComponent({
                             const value = context.parsed.y;
                             const monthIndex = context.dataIndex;
                             const total = getMonthlyTotals.value[monthIndex] || 0;
-
-                            const percentage = total > 0
-                                ? ((value / total) * 100).toFixed(1) + '%'
-                                : '0%';
-
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
                             return `${label}: ${formatCurrency(value)} (${percentage})`;
                         },
                         title: (tooltipItems) => {
-                            return `Mês: ${tooltipItems[0].label}`;
+                            return `Período: ${tooltipItems[0].label}`;
                         }
                     }
                 },
@@ -208,7 +199,7 @@ export default defineComponent({
                     stacked: true,
                     title: {
                         display: true,
-                        text: 'Mês',
+                        text: 'Período',
                         font: {
                             weight: 'bold'
                         }
@@ -231,7 +222,6 @@ export default defineComponent({
             }
         }));
 
-        // Ajustar tamanho da fonte baseado no tamanho da tela
         const handleResize = () => {
             ChartJS.defaults.font.size = window.innerWidth < 768 ? 10 : 12;
         };
@@ -254,6 +244,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
+/* Os estilos permanecem os mesmos */
 .area-chart-container {
     display: flex;
     flex-direction: column;

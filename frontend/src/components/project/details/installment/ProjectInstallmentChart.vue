@@ -76,13 +76,9 @@ export default {
       props.installments.filter(installment => installment.status === 'Pendente')
     );
 
-    const lateInstallments = computed(() => {
-      const today = new Date();
-      return props.installments.filter(installment => {
-        // Considera atrasada se for pendente e a data estimada já passou
-        return installment.status === 'Atrasada';
-      });
-    });
+    const lateInstallments = computed(() =>
+      props.installments.filter(installment => installment.status === 'Atrasada')
+    );
 
     // Títulos dos gráficos
     const paidTitle = "Distribuição de Parcelas Quitadas por Área";
