@@ -37,7 +37,7 @@ Este projeto é um sistema de execução orçamentária desenvolvido, utilizando
 git clone [URL_DO_REPOSITÓRIO]
 cd execucao-orcamentaria
 ```
-### 3. Variáveis de Ambiente
+### 2. Variáveis de Ambiente
 Crie dois arquivos `.env`, seguindo os exemplos dos arquivo `example.env`. Deve ser criado um arquivo `.env` no diretório `frontend/` e outro no diretório `backend/`. 
 
 ### 3. Inicialização com Docker
