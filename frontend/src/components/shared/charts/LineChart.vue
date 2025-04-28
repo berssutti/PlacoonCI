@@ -21,6 +21,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  LineController,
 } from "chart.js";
 
 ChartJS.register(
@@ -30,7 +31,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  LineController
 );
 
 export default defineComponent({
@@ -136,7 +138,7 @@ export default defineComponent({
 
     const prepareChartData = () => {
       console.log("Line Chart Data:", props.data);
-      
+
       if (!props.data || Object.keys(props.data).length === 0) {
         chartData.value = {
           labels: [],

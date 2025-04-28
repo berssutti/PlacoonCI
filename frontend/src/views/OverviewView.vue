@@ -77,13 +77,15 @@
             <v-card-text>
               <v-row>
                 <v-col cols="12" class="d-flex justify-center mb-2 mb-sm-4">
-                  <v-btn-group class="flex-wrap">
-                    <v-btn v-for="graph in graphs" :key="graph.id" :color="selectedGraph === graph.id ? 'primary' : ''"
-                      @click="selectedGraph = graph.id" class="ma-1" variant="outlined" size="x-small" size-sm="small"
-                      density="compact" density-sm="default">
-                      <v-icon size="x-small" size-sm="small" class="mr-0 mr-sm-1">{{ graph.icon }}</v-icon>
+                  <v-btn-group class="flex-wrap" rounded>
+                    <v-btn v-for="graph in graphs" :key="graph.id"
+                      :color="selectedGraph === graph.id ? 'primary' : 'grey-lighten-1'"
+                      :class="{ 'selected-btn': selectedGraph === graph.id }" @click="selectedGraph = graph.id"
+                      class="ma-1 transition-fast-in-fast-out" variant="flat" size="x-small" size-sm="small"
+                      min-width="40" min-height="28" :ripple="false">
+                      <v-icon size="x-small" size-sm="small" class="mr-1">{{ graph.icon }}</v-icon>
                       <span class="d-none d-sm-inline">{{ graph.name }}</span>
-                      <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) + '...' }}</span>
+                      <span class="d-sm-none">{{ graph.shortName || graph.name.substring(0, 3) }}</span>
                     </v-btn>
                   </v-btn-group>
                 </v-col>
@@ -147,6 +149,11 @@
                 <template v-slot:item.areas="{ item }">
                   <div class="text-caption">
                     {{ formatAreas(item.areas) }}
+                  </div>
+                </template>
+                <template v-slot:item.expected="{ item }">
+                  <div class="text-caption">
+                    {{ formatCurrency(item.expected) }}
                   </div>
                 </template>
               </v-data-table>
@@ -240,7 +247,7 @@
                                 <v-list-item-title>{{ area.name }}</v-list-item-title>
                                 <template v-slot:append>
                                   <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.budget)
-                                    }}</span>
+                                  }}</span>
                                 </template>
                               </v-list-item>
                             </v-list>
@@ -254,7 +261,7 @@
                                 <v-list-item-title>{{ area.name }}</v-list-item-title>
                                 <template v-slot:append>
                                   <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.executed)
-                                    }}</span>
+                                  }}</span>
                                 </template>
                               </v-list-item>
                             </v-list>
@@ -284,6 +291,7 @@ import DoughnutChart from "@/components/shared/charts/DoughnutChart.vue";
 import StatusDistributionChart from "@/components/shared/charts/StatusDistributionChart.vue";
 import GroupedBarChart from "@/components/shared/charts/GroupedBarChart.vue";
 import { useOverview } from '@/composables/useOverview';
+import { formatCurrency } from "@/utils/currencyUtils";
 
 export default {
   name: "OverviewView",
@@ -737,5 +745,24 @@ export default {
 .v-card--outlined {
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 8px;
+}
+
+.v-btn {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 500;
+}
+
+.v-btn.selected-btn {
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12);
+}
+
+.v-btn:not(.selected-btn):hover {
+  background-color: #e0e0e0 !important;
+  transform: translateY(-1px);
+}
+
+.transition-fast-in-fast-out {
+  transition: all 0.2s ease;
 }
 </style>
