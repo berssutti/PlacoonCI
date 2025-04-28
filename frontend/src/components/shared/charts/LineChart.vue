@@ -21,7 +21,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  LineController,
+  LineController
 } from "chart.js";
 
 ChartJS.register(
@@ -137,6 +137,10 @@ export default defineComponent({
     };
 
     const prepareChartData = () => {
+<<<<<<< HEAD
+=======
+      console.log("Line Chart Data:", props.data);
+>>>>>>> 6c875a1 (Add linecontroller to linechart component)
 
       if (!props.data || Object.keys(props.data).length === 0) {
         chartData.value = {

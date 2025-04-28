@@ -14,26 +14,16 @@ services:
   backend:
     build: ./backend
     container_name: orcamento-execucao_backend
-    volumes:
-      - ./backend:/app
     ports:
       - "8000:8000"
     depends_on:
       - db
-    develop:
-      watch:
-        - path: ./backend
-          action: rebuild
 
   frontend:
     build: ./frontend
     container_name: orcamento-execucao_frontend
-    command: yarn serve
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     ports:
-      - "8080:8080"
+      - "8080:80"
     depends_on:
       - backend
 
