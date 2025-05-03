@@ -87,12 +87,7 @@
     <h3 class="section-title"><v-icon class="mr-1">mdi-shape-outline</v-icon>Áreas</h3>
     <v-row>
       <v-col cols="12">
-        <v-chip
-          v-for="(area, index) in project.areas"
-          :key="index"
-          class="ma-1"
-          color="primary"
-        >
+        <v-chip v-for="(area, index) in project.areas" :key="index" class="ma-1" color="primary">
           {{ area.area_name }} - {{ area.percentage }}%
         </v-chip>
       </v-col>
@@ -101,6 +96,9 @@
 </template>
 
 <script>
+import { watch } from 'vue';
+import { toRef } from 'vue';
+
 export default {
   name: 'ProjectInfo',
   props: {
@@ -118,8 +116,17 @@ export default {
     }
   },
   setup(props) {
+    const project = toRef(props, 'project');
+    watch(
+      () => props.project.total_fcte_amount_expected,
+    );
+
+    watch(
+      () => props.project,
+      { deep: true }
+    );
     return {
-      project: props.project,
+      project,
       formatDate: props.formatDate,
       formatNumber: props.formatNumber,
     };
