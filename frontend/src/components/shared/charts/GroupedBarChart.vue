@@ -95,7 +95,7 @@ export default defineComponent({
           grouped: true,  // Esta opção agrupa as barras
           title: {
             display: true,
-            text: "Projetos",
+            text: "Área",
             font: {
               size: 12,
               weight: 600
