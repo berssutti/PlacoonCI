@@ -1,70 +1,33 @@
 <template>
     <v-container>
         <v-card elevation="2" class="pa-4 project-card">
-            <ProjectHeader
-                :project="project"
-                @edit="handleEditProject"
-                @delete="showDeleteProjectDialog = true"
-                @back="handleBack"
-            />
+            <ProjectHeader :project="project" @edit="handleEditProject" @delete="showDeleteProjectDialog = true"
+                @back="handleBack" />
 
-            <ProjectInfo
-                v-if="project"
-                :project="project"
-                :formatDate="formatDate"
-                :formatNumber="formatNumber"
-            />
+            <ProjectInfo v-if="project" :project="project" :formatDate="formatDate" :formatNumber="formatNumber" />
 
-            <InstallmentList
-                :installments="installments"
-                :formatDate="formatDate"
-                :formatNumber="formatNumber"
-                @add="handleAddInstallment"
-                @edit="handleEditInstallment"
-                @delete="handleShowDeleteInstallmentDialog"
-                @chart="handleProjectInstallmentChart"
-            />
+            <InstallmentList :installments="installments" :formatDate="formatDate" :formatNumber="formatNumber"
+                @add="handleAddInstallment" @edit="handleEditInstallment" @delete="handleShowDeleteInstallmentDialog"
+                @chart="handleProjectInstallmentChart" />
 
-            <InstallmentForm
-                v-model="showInstallmentForm"
-                :installment="currentInstallment"
-                :isEditing="isEditing"
-                @save="handleSaveInstallment"
-                @close="handleCloseInstallmentForm"
-            />
+            <InstallmentForm v-model="showInstallmentForm" :installment="currentInstallment" :isEditing="isEditing"
+                @save="handleSaveInstallment" @close="handleCloseInstallmentForm" />
 
-            <ProjectInstallmentChart 
-                v-model="showProjectInstallmentChart"
-                v-if="installments.length > 0"
-                :installments="installments"
-                @close="handleCloseProjectInstallmentChart"
-            />
+            <ProjectInstallmentChart v-model="showProjectInstallmentChart" v-if="installments.length > 0"
+                :installments="installments" @close="handleCloseProjectInstallmentChart" />
 
-            <ConfirmDialog
-                v-model="showDeleteProjectDialog"
-                title="Confirmar Exclusão de Projeto"
+            <ConfirmDialog v-model="showDeleteProjectDialog" title="Confirmar Exclusão de Projeto"
                 message="Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita."
-                confirm-text="Excluir"
-                confirm-color="red darken-1"
-                @confirm="confirmDeleteProject"
-            />
+                confirm-text="Excluir" confirm-color="red darken-1" @confirm="confirmDeleteProject" />
 
-            <ConfirmDialog
-                v-model="showDeleteInstallmentDialog"
-                title="Confirmar Exclusão de Parcela"
+            <ConfirmDialog v-model="showDeleteInstallmentDialog" title="Confirmar Exclusão de Parcela"
                 message="Tem certeza que deseja excluir esta parcela? Esta ação não pode ser desfeita."
-                confirm-text="Excluir"
-                confirm-color="red darken-1"
-                @confirm="confirmDeleteInstallment"
-            />
+                confirm-text="Excluir" confirm-color="red darken-1" @confirm="confirmDeleteInstallment" />
 
-            <FeedbackSnackbar
-                v-model="snackbar.show"
-                :message="snackbar.text"
-                :color="snackbar.color"
-            />
+            <FeedbackSnackbar v-model="snackbar.show" :message="snackbar.text" :color="snackbar.color" />
         </v-card>
     </v-container>
+
 </template>
 
 <script>
@@ -118,7 +81,7 @@ export default {
         const formatDate = (date) => dateFormatter(date);
 
         const handleBack = () => router.push({ name: 'ProjectList' });
-        
+
         const showSnackbar = (text, color = 'success') => {
             snackbar.value = {
                 show: true,
@@ -150,8 +113,9 @@ export default {
         const confirmDeleteInstallment = async () => {
             try {
                 await deleteInstallment(project.value.id, installmentToDelete.value);
-                showSnackbar('Parcela excluída com sucesso');
                 await fetchInstallments(project.value.id);
+                await fetchProject(project.value.id);
+                showSnackbar('Parcela excluída com sucesso');
             } catch (error) {
                 console.error('Erro ao deletar a parcela:', error);
                 showSnackbar('Erro ao excluir a parcela', 'error');
@@ -190,8 +154,10 @@ export default {
                     await createInstallment(project.value.id, installment);
                     showSnackbar('Parcela criada com sucesso');
                 }
-                
+
                 await fetchInstallments(project.value.id);
+                await fetchProject(project.value.id);
+
                 handleCloseInstallmentForm();
             } catch (error) {
                 console.error('Erro ao salvar a parcela:', error);
@@ -206,7 +172,7 @@ export default {
         };
 
         const handleProjectInstallmentChart = () => {
-            if(installments.value.length === 0) {
+            if (installments.value.length === 0) {
                 showSnackbar('Não há parcelas para exibir no gráfico', 'warning');
                 return;
             }

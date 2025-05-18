@@ -3,91 +3,100 @@ from .models import Project, Area, ProjectArea, Installment
 
 from decimal import Decimal
 
+
 class AreaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Area
-        fields = ['id', 'name', 'projects']
+        fields = ["id", "name", "projects"]
+
 
 class ProjectAreaSerializer(serializers.ModelSerializer):
-    area_name = serializers.CharField(source='area.name')
+    area_name = serializers.CharField(source="area.name")
 
     class Meta:
         model = ProjectArea
-        fields = ['area_name', 'percentage']
+        fields = ["area_name", "percentage"]
+
 
 class ProjectSerializer(serializers.ModelSerializer):
-    areas = ProjectAreaSerializer(source='projectarea_set', many=True)
+    areas = ProjectAreaSerializer(source="projectarea_set", many=True)
 
     class Meta:
         model = Project
         fields = [
-            'id',
-            'name',
-            'description',
-            'start_date',
-            'end_date',
-            'total_unb_amount_expected',
-            'total_fcte_amount_expected',
-            'total_compensation_expected',
-            'total_compensation_executed',
-            'total_compensation_pending',
-            'total_compensation_overdue',
-            'coordinator',
-            'substitute_coordinator',
-            'academic_supervisor',
-            'processo_sei',
-            'status',
-            'nota_dotacao',
-            'ptres',
-            'ugr',
-            'funding_source',
-            'detailed_nature',
-            'internal_plan',
-            'internal_plan_name',
-            'areas',
+            "id",
+            "name",
+            "description",
+            "start_date",
+            "end_date",
+            "total_unb_amount_expected",
+            "total_fcte_amount_expected",
+            "total_compensation_expected",
+            "total_compensation_executed",
+            "total_compensation_pending",
+            "total_compensation_overdue",
+            "coordinator",
+            "substitute_coordinator",
+            "academic_supervisor",
+            "processo_sei",
+            "status",
+            "nota_dotacao",
+            "ptres",
+            "ugr",
+            "funding_source",
+            "detailed_nature",
+            "internal_plan",
+            "internal_plan_name",
+            "areas",
         ]
+        read_only_fields = ["total_fcte_amount_expected"]
 
     def create(self, validated_data):
-        areas_data = validated_data.pop('projectarea_set', [])
+        areas_data = validated_data.pop("projectarea_set", [])
 
         project = Project.objects.create(**validated_data)
 
         for area_data in areas_data:
-            area_info = area_data.pop('area')
+            area_info = area_data.pop("area")
             area, created = Area.objects.get_or_create(**area_info)
             ProjectArea.objects.create(project=project, area=area, **area_data)
 
         return project
-    
+
     def update(self, instance, validated_data):
-        areas_data = validated_data.pop('projectarea_set', None)
+        areas_data = validated_data.pop("projectarea_set", None)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
         if areas_data is not None:
-            existing_areas = set(instance.projectarea_set.values_list('area_id', flat=True))
+            existing_areas = set(
+                instance.projectarea_set.values_list("area_id", flat=True)
+            )
             new_areas = set()
 
             for area_data in areas_data:
-                area_info = area_data.pop('area')
-                if 'id' in area_info:
-                    area = Area.objects.get(id=area_info['id'])
-                elif 'name' in area_info:
-                    area = Area.objects.get(name=area_info['name'])
+                area_info = area_data.pop("area")
+                if "id" in area_info:
+                    area = Area.objects.get(id=area_info["id"])
+                elif "name" in area_info:
+                    area = Area.objects.get(name=area_info["name"])
                 else:
-                    raise ValueError("Cada área precisa ter um identificador 'id' ou 'name'.")
+                    raise ValueError(
+                        "Cada área precisa ter um identificador 'id' ou 'name'."
+                    )
 
                 ProjectArea.objects.update_or_create(
-                    project=instance, area=area, defaults=area_data)
+                    project=instance, area=area, defaults=area_data
+                )
 
                 new_areas.add(area.id)
 
             instance.projectarea_set.exclude(area_id__in=new_areas).delete()
 
         return instance
-    
+
 
 class InstallmentSerializer(serializers.ModelSerializer):
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
@@ -95,7 +104,7 @@ class InstallmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Installment
-        fields = '__all__'
+        fields = "__all__"
 
     def get_area_values(self, obj):
         ...
@@ -103,8 +112,11 @@ class InstallmentSerializer(serializers.ModelSerializer):
         area_values = {}
         for project_area in project_areas:
             amount_decimal = Decimal(str(obj.amount))
-            area_values[project_area.area.name] = amount_decimal * (project_area.percentage / Decimal("100"))
+            area_values[project_area.area.name] = amount_decimal * (
+                project_area.percentage / Decimal("100")
+            )
         return area_values
+
 
 class ProjectSummarySerializer(serializers.Serializer):
     name = serializers.CharField()
@@ -114,11 +126,9 @@ class ProjectSummarySerializer(serializers.Serializer):
     overdue = serializers.FloatField()
     coordinator = serializers.CharField()
     start_date = serializers.CharField()
-    areas = serializers.ListField(
-        child=serializers.CharField(),
-        allow_empty=True
-    )
+    areas = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     total_installments = serializers.IntegerField()
+
 
 class OverviewSerializer(serializers.Serializer):
     total_expected = serializers.FloatField()
@@ -126,31 +136,21 @@ class OverviewSerializer(serializers.Serializer):
     total_pending = serializers.FloatField()
     total_overdue = serializers.FloatField()
     areas_summary = serializers.ListField(
-        child=serializers.DictField(
-            child=serializers.CharField(),
-            allow_empty=True
-        )
+        child=serializers.DictField(child=serializers.CharField(), allow_empty=True)
     )
     institution_summary = serializers.DictField(
-        child=serializers.FloatField(),
-        allow_empty=True
+        child=serializers.FloatField(), allow_empty=True
     )
     year_summary = serializers.DictField(
-        child=serializers.FloatField(),
-        allow_empty=True
+        child=serializers.FloatField(), allow_empty=True
     )
     destination_summary = serializers.DictField(
-        child=serializers.FloatField(),
-        allow_empty=True
+        child=serializers.FloatField(), allow_empty=True
     )
     projects_summary = ProjectSummarySerializer(many=True)
     monthly_summary = serializers.DictField(
-        child=serializers.FloatField(),
-        allow_empty=True
+        child=serializers.FloatField(), allow_empty=True
     )
     monthly_area_summary = serializers.DictField(
-        child=serializers.DictField(
-            child=serializers.FloatField(),
-            allow_empty=True
-        )
+        child=serializers.DictField(child=serializers.FloatField(), allow_empty=True)
     )
