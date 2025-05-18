@@ -145,7 +145,7 @@
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
               <v-data-table :headers="headersProjectsSummary" :items="projectsSummary" class="elevation-1"
-                density="compact" hide-default-footer>
+                density="compact">
                 <template v-slot:item.areas="{ item }">
                   <div class="text-caption">
                     {{ formatAreas(item.areas) }}
