@@ -74,7 +74,7 @@ class Command(BaseCommand):
                 )
             )  # --- Fim Limpeza ---
 
-        # # --- 1. Criar Áreas ---
+        # --- 1. Criar Áreas ---
         self.stdout.write(
             "Consultando Áreas existentes no banco de dados (via fixture)..."
         )
@@ -182,16 +182,6 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"{len(created_projects)} Projetos criados.")
         )
 
-        # Certifique-se que created_areas não está vazio antes de continuar
-        # if not created_areas:
-        #     self.stdout.write(
-        #         self.style.WARNING(
-        #             "Nenhuma Área criada. Pulando criação de ProjectArea."
-        #         )
-        #     )
-        #     created_areas = (
-        #         []
-        #     )  # Garante que a lista está vazia se nenhuma area foi criada
         if not created_projects:
             self.stdout.write(
                 self.style.WARNING(
