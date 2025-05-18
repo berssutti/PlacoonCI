@@ -148,6 +148,7 @@ export default defineComponent({
     };
 
     const prepareChartData = () => {
+      console.log("Grouped Bar chart data:", props.data);
       if (!props.data || props.data.length === 0) {
         chartData.value = {
           labels: [],
@@ -162,9 +163,9 @@ export default defineComponent({
       });
 
       const labels = sortedProjects.map(project => project.name);
-      
+
       // Converter strings para números
-      const expectedValues = sortedProjects.map(project => parseFloat(project.expected));
+      const expectedValues = sortedProjects.map(project => parseFloat(project.budget));
       const executedValues = sortedProjects.map(project => parseFloat(project.executed));
       const overdueValues = sortedProjects.map(project => parseFloat(project.overdue));
       const pendingValues = sortedProjects.map(project => parseFloat(project.pending));
