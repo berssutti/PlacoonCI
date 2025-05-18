@@ -512,7 +512,6 @@ export default {
     });
 
     const getSelectedGraphProps = computed(() => {
-      console.log(overview.value)
       const graph = graphs.find(g => g.id === selectedGraph.value);
       if (!graph) return {};
 

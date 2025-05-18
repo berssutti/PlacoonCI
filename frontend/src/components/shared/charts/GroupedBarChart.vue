@@ -148,7 +148,6 @@ export default defineComponent({
     };
 
     const prepareChartData = () => {
-      console.log("Grouped Bar chart data:", props.data);
       if (!props.data || props.data.length === 0) {
         chartData.value = {
           labels: [],

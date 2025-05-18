@@ -167,7 +167,6 @@ export default defineComponent({
       const executedValues = sortedAreas.map(area => parseFloat(area.executed) || 0);
       const pendingValues = sortedAreas.map(area => parseFloat(area.pending) || 0);
       const overdueValues = sortedAreas.map(area => parseFloat(area.overdue) || 0);
-      console.log("Valor executado:", executedValues)
       const datasets = [
         {
           label: 'Executado',
