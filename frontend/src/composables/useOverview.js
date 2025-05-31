@@ -9,7 +9,7 @@ export function useOverview() {
   const fetchOverview = async (year) => {
     loading.value = true;
     error.value = null;
-    
+
     try {
       const response = await axios.get(`http://localhost:8000/api/projects/overview/?year=${year}`);
       overview.value = response.data;

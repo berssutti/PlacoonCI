@@ -6,60 +6,24 @@
       </v-card-title>
       <v-card-text>
         <v-form ref="form" v-model="valid">
-          <v-text-field
-            v-model="localInstallment.processo_sei"
-            clearable
-            label="Processo SEI"
-            placeholder="*****.******/****-**"
-            :rules="[v => !!v || 'Campo obrigatório']"
-            @input="localInstallment.processo_sei = formatSeiProcess($event.target.value)"
-            required
-          ></v-text-field>
+          <v-text-field v-model="localInstallment.processo_sei" clearable label="Processo SEI"
+            placeholder="*****.******/****-**" :rules="[v => !!v || 'Campo obrigatório']"
+            @input="localInstallment.processo_sei = formatSeiProcess($event.target.value)" required></v-text-field>
 
-          <v-text-field
-            v-model="displayAmount"
-            @input="handleAmountInput"
-            label="Valor"
-            :rules="[v => !!v || 'Campo obrigatório']"
-            prefix="R$"
-          />
-          <v-text-field
-            v-model="localInstallment.estimated_date"
-            label="Data Estimada"
-            :rules="[v => !!v || 'Campo obrigatório']"
-            type="date"
-          />
-          <v-textarea
-            v-model="localInstallment.observation"
-            label="Observação"
-            rows="1"
-            counter
-            auto-grow
-            maxlength="200"
-          />
-          <v-textarea
-            v-model="localInstallment.destination"
-            label="Destino"
-            rows="1"
-            auto-grow
-            counter
-            maxlength="200"
-          />
+          <v-text-field v-model="displayAmount" @input="handleAmountInput" label="Valor"
+            :rules="[v => !!v || 'Campo obrigatório']" prefix="R$" />
+          <v-text-field v-model="localInstallment.estimated_date" label="Data Estimada"
+            :rules="[v => !!v || 'Campo obrigatório']" type="date" />
+          <v-textarea v-model="localInstallment.observation" label="Observação" rows="1" counter auto-grow
+            maxlength="200" />
+          <v-textarea v-model="localInstallment.destination" label="Destino" rows="1" auto-grow counter
+            maxlength="200" />
 
-          <v-select
-            v-model="localInstallment.status"
-            :items="statusOptions"
-            label="Estado"
-            :rules="[v => !!v || 'Campo obrigatório']"
-          />
+          <v-select v-model="localInstallment.status" :items="statusOptions" label="Estado"
+            :rules="[v => !!v || 'Campo obrigatório']" />
 
-          <v-text-field
-            v-if="localInstallment.status === 'Quitada'"
-            v-model="localInstallment.effective_date"
-            label="Data Efetiva"
-            :rules="[v => !!v || 'Campo obrigatório']"
-            type="date"
-          />
+          <v-text-field v-if="localInstallment.status === 'Quitada'" v-model="localInstallment.effective_date"
+            label="Data Efetiva" :rules="[v => !!v || 'Campo obrigatório']" type="date" />
         </v-form>
       </v-card-text>
 
@@ -101,7 +65,7 @@ export default {
 
     const displayAmount = computed({
       get() {
-        return localInstallment.amount ? localInstallment.amount.toFixed(2)  : '';
+        return localInstallment.amount ? localInstallment.amount.toFixed(2) : '';
       },
       set(newValue) {
         return newValue;

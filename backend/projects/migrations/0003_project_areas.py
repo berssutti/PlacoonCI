@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projects', '0002_rename_due_date_installment_estimated_date_and_more'),
+        ("projects", "0002_rename_due_date_installment_estimated_date_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='areas',
-            field=models.ManyToManyField(through='projects.ProjectArea', to='projects.area'),
+            model_name="project",
+            name="areas",
+            field=models.ManyToManyField(
+                through="projects.ProjectArea", to="projects.area"
+            ),
         ),
     ]

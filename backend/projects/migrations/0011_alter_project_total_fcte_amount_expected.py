@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projects', '0010_alter_project_total_compensation_executed_and_more'),
+        ("projects", "0010_alter_project_total_compensation_executed_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='project',
-            name='total_fcte_amount_expected',
+            model_name="project",
+            name="total_fcte_amount_expected",
             field=models.FloatField(default=0, editable=False),
         ),
     ]

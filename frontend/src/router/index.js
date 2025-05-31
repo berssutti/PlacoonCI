@@ -16,20 +16,20 @@ const routes = [
     path: '/projects',
     name: 'ProjectList',
     component: ProjectList,
-    meta: { title: 'Lista de Projetos'} 
+    meta: { title: 'Lista de Projetos' }
   },
   {
     path: '/projects/create',
     name: 'ProjectCreate',
     component: ProjectForm,
-    meta: { title: 'Cadastrar Projeto'}
+    meta: { title: 'Cadastrar Projeto' }
   },
   {
     path: '/projects/:id',
     name: 'ProjectDetails',
     component: ProjectDetails,
     props: true,
-    meta: {title: 'Detalhes do Projeto'}
+    meta: { title: 'Detalhes do Projeto' }
   },
   {
     path: '/projects/edit/:id',

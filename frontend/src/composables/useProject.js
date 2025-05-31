@@ -6,14 +6,14 @@ export function useProject() {
     const loading = ref(false);
     const error = ref(null);
 
-    const fetchProject = async (id=null, year=null) => {
+    const fetchProject = async (id = null, year = null) => {
         loading.value = true;
         let response = null;
 
         try {
             id ? response = await projectService.getProject(id) : response = await projectService.getAllProjects(year);
             project.value = response.data;
-        } catch(err) {
+        } catch (err) {
             error.value = 'Erro ao carregar projeto';
             console.error(err);
         } finally {
@@ -27,7 +27,7 @@ export function useProject() {
         try {
             await projectService.deleteProject(id);
             project.value = project.value.filter(project => project.id !== id);
-        } catch(err) {
+        } catch (err) {
             error.value = 'Erro ao deletar projeto';
             console.error(err);
         } finally {

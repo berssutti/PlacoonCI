@@ -88,9 +88,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(f"{len(existing_areas)} Áreas existentes encontradas.")
         )
-        created_areas = (
-            existing_areas
-        )
+        created_areas = existing_areas
 
         # --- 2. Criar Projetos ---
         self.stdout.write(f"Criando {num_projects} Projetos...")
@@ -156,7 +154,9 @@ class Command(BaseCommand):
 
             total_unb_amount = round(random.uniform(10000.0, 500000.0), 2)
 
-            project_processo_sei = generate_unique_processo_sei() # Generate unique SEI for project
+            project_processo_sei = (
+                generate_unique_processo_sei()
+            )  # Generate unique SEI for project
 
             project = Project(
                 name=name,

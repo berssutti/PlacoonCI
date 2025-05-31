@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projects', '0006_remove_project_areas_area_projects'),
+        ("projects", "0006_remove_project_areas_area_projects"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='project',
-            name='nota_dotacao',
+            model_name="project",
+            name="nota_dotacao",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='ptres',
+            model_name="project",
+            name="ptres",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='ugr',
+            model_name="project",
+            name="ugr",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
     ]
