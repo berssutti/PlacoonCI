@@ -64,6 +64,18 @@ Após a inicialização, você pode acessar:
 O projeto está configurado com hot-reload para desenvolvimento:
 - Alterações no backend serão automaticamente detectadas e o servidor será reiniciado
 - Alterações no frontend serão automaticamente compiladas e o navegador será atualizado
+  
+### Popular Banco de dados
+
+Com os serviços rodando: O comando abaixo vai limpar todos os dados do banco e em seguida popular o banco de dados com 20 projetos.
+
+```python
+docker compose exec backend python3 manage.py projects_mock_data --projects 20 --clear-data
+```
+O comando tem um *helper* que oferece mais informações.
+```python
+docker compose exec backend python3 manage.py projects_mock_data --help
+```
 
 ### Estrutura de Diretórios
 ```

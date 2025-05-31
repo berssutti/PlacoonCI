@@ -7,6 +7,16 @@
       <v-card-text>
         <v-form ref="form" v-model="valid">
           <v-text-field
+            v-model="localInstallment.processo_sei"
+            clearable
+            label="Processo SEI"
+            placeholder="*****.******/****-**"
+            :rules="[v => !!v || 'Campo obrigatório']"
+            @input="localInstallment.processo_sei = formatSeiProcess($event.target.value)"
+            required
+          ></v-text-field>
+
+          <v-text-field
             v-model="displayAmount"
             @input="handleAmountInput"
             label="Valor"
@@ -64,6 +74,7 @@
 <script>
 import { ref, watch, reactive, computed } from 'vue';
 import { parseCurrency } from '@/utils/currencyUtils';
+import { formatSeiProcess } from '@/utils/seiFormatter';
 
 export default {
   name: 'InstallmentForm',
@@ -135,6 +146,7 @@ export default {
       cancel,
       save,
       statusOptions,
+      formatSeiProcess
     };
   },
 };

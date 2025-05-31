@@ -105,4 +105,5 @@ const formatSeiProcess = (value) => {
 const formattedSeiProcess = computed(() => {
   return formatSeiProcess(props.project.processo_sei)
 })
+
 </script>

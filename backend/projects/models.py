@@ -110,6 +110,16 @@ class Installment(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="installments"
     )
+    processo_sei = models.CharField(
+        max_length=20,
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex=r"^\d{5}\.\d{6}/\d{4}-\d{2}$",
+                message="Must be in format ddddd.dddddd/YYYY-MM",
+            )
+        ],
+    )
     amount = models.FloatField()
     estimated_date = models.DateField()
     effective_date = models.DateField(null=True, blank=True)

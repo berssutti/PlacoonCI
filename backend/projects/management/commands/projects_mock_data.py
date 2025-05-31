@@ -89,7 +89,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"{len(existing_areas)} Áreas existentes encontradas.")
         )
         created_areas = (
-            existing_areas  # Renomeia para manter a consistência com o código posterior
+            existing_areas
         )
 
         # --- 2. Criar Projetos ---
@@ -98,23 +98,36 @@ class Command(BaseCommand):
         status_choices_values = [choice[0] for choice in Project.STATUS_CHOICES]
         current_year = timezone.now().year
 
+        all_generated_processo_sei = set()
+
+        def generate_unique_processo_sei():
+            while True:
+                parte1 = str(random.randint(10000, 99999))
+                parte2 = str(random.randint(100000, 999999))
+                ano_processo = str(random.randint(current_year - 10, current_year + 1))
+                mes = str(random.randint(1, 12)).zfill(2)
+                processo = f"{parte1}.{parte2}/{ano_processo}-{mes}"
+                if processo not in all_generated_processo_sei:
+                    all_generated_processo_sei.add(processo)
+                    return processo
+
         # Define as datas limites como objetos date
         start_date_limit = date(current_year - 2, 1, 1)
         end_date_limit = date(current_year + 1, 12, 31)
 
         # Gerar processo_sei únicos
-        processo_sei_set = set()
-        while len(processo_sei_set) < num_projects:
-            # Simula o formato ddddd.dddddd/YYYY-MM
-            parte1 = str(random.randint(10000, 99999))
-            parte2 = str(random.randint(100000, 999999))
-            # Ano dentro de um range razoável para processo_sei
-            ano_processo = str(random.randint(current_year - 10, current_year + 1))
-            mes = str(random.randint(1, 12)).zfill(2)
-            processo = f"{parte1}.{parte2}/{ano_processo}-{mes}"
-            processo_sei_set.add(processo)
+        # processo_sei_set = set()
+        # while len(processo_sei_set) < num_projects:
+        #     # Simula o formato ddddd.dddddd/YYYY-MM
+        #     parte1 = str(random.randint(10000, 99999))
+        #     parte2 = str(random.randint(100000, 999999))
+        #     # Ano dentro de um range razoável para processo_sei
+        #     ano_processo = str(random.randint(current_year - 10, current_year + 1))
+        #     mes = str(random.randint(1, 12)).zfill(2)
+        #     processo = f"{parte1}.{parte2}/{ano_processo}-{mes}"
+        #     processo_sei_set.add(processo)
 
-        processo_sei_list = list(processo_sei_set)
+        # processo_sei_list = list(processo_sei_set)
 
         for i in range(num_projects):
             name = fake.catch_phrase()
@@ -143,6 +156,8 @@ class Command(BaseCommand):
 
             total_unb_amount = round(random.uniform(10000.0, 500000.0), 2)
 
+            project_processo_sei = generate_unique_processo_sei() # Generate unique SEI for project
+
             project = Project(
                 name=name,
                 description=description,
@@ -154,7 +169,7 @@ class Command(BaseCommand):
                 coordinator=fake.name(),
                 substitute_coordinator=fake.name(),
                 academic_supervisor=fake.name(),
-                processo_sei=processo_sei_list[i],
+                processo_sei=project_processo_sei,
                 status=random.choice(status_choices_values),
                 nota_dotacao=fake.word() if random.random() > 0.3 else None,  # Opcional
                 ptres=fake.word() if random.random() > 0.3 else None,  # Opcional
@@ -311,9 +326,12 @@ class Command(BaseCommand):
                         project.total_unb_amount_expected * random.uniform(0.05, 0.3), 2
                     )
 
+                    installments_processo_sei = generate_unique_processo_sei()
+
                     installments_to_create.append(
                         Installment(
                             project=project,
+                            processo_sei=installments_processo_sei,
                             amount=amount,
                             estimated_date=estimated_date,
                             effective_date=effective_date,
