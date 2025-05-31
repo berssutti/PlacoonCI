@@ -9,57 +9,142 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Area',
+            name="Area",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
             ],
         ),
         migrations.CreateModel(
-            name='Project',
+            name="Project",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('description', models.CharField(max_length=200)),
-                ('start_date', models.DateField()),
-                ('end_date', models.DateField()),
-                ('total_unb_amount_expected', models.FloatField()),
-                ('total_fcte_amount_expected', models.FloatField()),
-                ('coordinator', models.CharField(max_length=100)),
-                ('substitute_coordinator', models.CharField(max_length=100)),
-                ('academic_supervisor', models.CharField(max_length=100)),
-                ('processo_sei', models.CharField(max_length=20, unique=True, validators=[django.core.validators.RegexValidator(message='Must be in format ddddd.dddddd/YYYY-MM', regex='^\\d{5}\\.\\d{6}/\\d{4}-\\d{2}$')])),
-                ('status', models.CharField(choices=[('Processando', 'Processando'), ('Recebido', 'Recebido')], default='Processando', max_length=11)),
-                ('nota_dotacao', models.CharField(blank=True, max_length=30, null=True)),
-                ('ptres', models.CharField(blank=True, max_length=6, null=True)),
-                ('ugr', models.CharField(blank=True, max_length=6, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("description", models.CharField(max_length=200)),
+                ("start_date", models.DateField()),
+                ("end_date", models.DateField()),
+                ("total_unb_amount_expected", models.FloatField()),
+                ("total_fcte_amount_expected", models.FloatField()),
+                ("coordinator", models.CharField(max_length=100)),
+                ("substitute_coordinator", models.CharField(max_length=100)),
+                ("academic_supervisor", models.CharField(max_length=100)),
+                (
+                    "processo_sei",
+                    models.CharField(
+                        max_length=20,
+                        unique=True,
+                        validators=[
+                            django.core.validators.RegexValidator(
+                                message="Must be in format ddddd.dddddd/YYYY-MM",
+                                regex="^\\d{5}\\.\\d{6}/\\d{4}-\\d{2}$",
+                            )
+                        ],
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("Processando", "Processando"),
+                            ("Recebido", "Recebido"),
+                        ],
+                        default="Processando",
+                        max_length=11,
+                    ),
+                ),
+                (
+                    "nota_dotacao",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("ptres", models.CharField(blank=True, max_length=6, null=True)),
+                ("ugr", models.CharField(blank=True, max_length=6, null=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Installment',
+            name="Installment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('amount', models.FloatField()),
-                ('due_date', models.DateField()),
-                ('status', models.CharField(choices=[('Atrasada', 'Atrasada'), ('Quitada', 'Quitada'), ('Pendente', 'Pendente')], default='Pendente', max_length=10)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='installments', to='projects.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("amount", models.FloatField()),
+                ("due_date", models.DateField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("Atrasada", "Atrasada"),
+                            ("Quitada", "Quitada"),
+                            ("Pendente", "Pendente"),
+                        ],
+                        default="Pendente",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="installments",
+                        to="projects.project",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='ProjectArea',
+            name="ProjectArea",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('percentage', models.DecimalField(decimal_places=2, max_digits=5)),
-                ('area', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='projects.area')),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='projects.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("percentage", models.DecimalField(decimal_places=2, max_digits=5)),
+                (
+                    "area",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="projects.area"
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="projects.project",
+                    ),
+                ),
             ],
             options={
-                'unique_together': {('project', 'area')},
+                "unique_together": {("project", "area")},
             },
         ),
     ]

@@ -6,31 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projects', '0008_project_detailed_nature_project_funding_source_and_more'),
+        ("projects", "0008_project_detailed_nature_project_funding_source_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='total_compensation_executed',
+            model_name="project",
+            name="total_compensation_executed",
             field=models.FloatField(default=10),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='project',
-            name='total_compensation_expected',
+            model_name="project",
+            name="total_compensation_expected",
             field=models.FloatField(default=10),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='project',
-            name='total_compensation_overdue',
+            model_name="project",
+            name="total_compensation_overdue",
             field=models.FloatField(default=10),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='project',
-            name='total_compensation_pending',
+            model_name="project",
+            name="total_compensation_pending",
             field=models.FloatField(default=10),
             preserve_default=False,
         ),

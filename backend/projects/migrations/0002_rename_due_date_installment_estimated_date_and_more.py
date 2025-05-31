@@ -6,28 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projects', '0001_initial'),
+        ("projects", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='installment',
-            old_name='due_date',
-            new_name='estimated_date',
+            model_name="installment",
+            old_name="due_date",
+            new_name="estimated_date",
         ),
         migrations.AddField(
-            model_name='installment',
-            name='destination',
+            model_name="installment",
+            name="destination",
             field=models.CharField(blank=True, max_length=200, null=True),
         ),
         migrations.AddField(
-            model_name='installment',
-            name='effective_date',
+            model_name="installment",
+            name="effective_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='installment',
-            name='observation',
+            model_name="installment",
+            name="observation",
             field=models.CharField(blank=True, max_length=200, null=True),
         ),
     ]
