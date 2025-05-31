@@ -107,10 +107,8 @@ export default defineComponent({
       }).format(value);
     },
     prepareChartData() {
-      console.log("Bar chart raw data:", this.data);
-      
+
       if (!this.data || Object.keys(this.data).length === 0) {
-        console.log('No data to display Bar chart');
         this.chartData = {
           labels: [],
           datasets: []
@@ -120,7 +118,7 @@ export default defineComponent({
 
       const months = Object.keys(this.data).sort((a, b) => parseInt(a) - parseInt(b));
       const areas = new Set();
-      
+
       months.forEach(month => {
         Object.keys(this.data[month]).forEach(area => {
           areas.add(area);
@@ -129,7 +127,7 @@ export default defineComponent({
 
       const datasets = Array.from(areas).map((area, index) => {
         const color = this.areaColors[area] || this.colors[index % this.colors.length];
-        
+
         const areaData = months.map(month => {
           return this.data[month][area] || 0; // Se não existir o valor, usar 0
         });
@@ -145,10 +143,10 @@ export default defineComponent({
       });
 
       const monthNames = [
-        'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+        'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
       ];
-      
+
       const labels = months.map(month => {
         return `${monthNames[parseInt(month) - 1]}`;
       });
@@ -184,8 +182,8 @@ export default defineComponent({
               label: (context) => {
                 const label = context.dataset.label || '';
                 const value = context.parsed.y;
-                const percentage = totalValue > 0 
-                  ? ((value / totalValue) * 100).toFixed(1) + '%' 
+                const percentage = totalValue > 0
+                  ? ((value / totalValue) * 100).toFixed(1) + '%'
                   : '0%';
                 return `${label}: ${this.formatCurrency(value)} (${percentage})`;
               },
@@ -276,7 +274,7 @@ export default defineComponent({
   .chart-container {
     padding: 10px;
   }
-  
+
   .chart-title {
     font-size: 16px;
     margin-bottom: 10px;

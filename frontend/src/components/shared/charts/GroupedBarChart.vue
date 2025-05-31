@@ -95,7 +95,7 @@ export default defineComponent({
           grouped: true,  // Esta opção agrupa as barras
           title: {
             display: true,
-            text: "Projetos",
+            text: "Área",
             font: {
               size: 12,
               weight: 600
@@ -162,9 +162,9 @@ export default defineComponent({
       });
 
       const labels = sortedProjects.map(project => project.name);
-      
+
       // Converter strings para números
-      const expectedValues = sortedProjects.map(project => parseFloat(project.expected));
+      const expectedValues = sortedProjects.map(project => parseFloat(project.budget));
       const executedValues = sortedProjects.map(project => parseFloat(project.executed));
       const overdueValues = sortedProjects.map(project => parseFloat(project.overdue));
       const pendingValues = sortedProjects.map(project => parseFloat(project.pending));

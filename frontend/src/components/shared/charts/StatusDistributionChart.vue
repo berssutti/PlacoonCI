@@ -50,6 +50,7 @@ export default defineComponent({
   setup(props) {
     const chartRef = ref(null);
     let chart = null;
+    const fullChartLabels = ref([]);
 
     const chartData = ref(null);
     const chartOptions = {
@@ -79,6 +80,18 @@ export default defineComponent({
             size: 13
           },
           callbacks: {
+            title: (tooltipItems) => {
+              if (tooltipItems.length > 0) {
+                const tooltipItem = tooltipItems[0];
+                if (tooltipItem && typeof tooltipItem.dataIndex === 'number') {
+                  const dataIndex = tooltipItem.dataIndex;
+                  if (fullChartLabels.value && dataIndex >= 0 && dataIndex < fullChartLabels.value.length) {
+                    return fullChartLabels.value[dataIndex];
+                  }
+                }
+              }
+              return '';
+            },
             label: (context) => {
               const label = context.dataset.label || "";
               const value = parseFloat(context.raw) || 0;
@@ -100,7 +113,7 @@ export default defineComponent({
           stacked: true,
           title: {
             display: true,
-            text: "Área",
+            text: "Projeto",
             font: {
               size: 12,
               weight: 600
@@ -154,6 +167,7 @@ export default defineComponent({
           labels: [],
           datasets: [],
         };
+        fullChartLabels.value = [];
         return;
       }
       const sortedAreas = [...props.data].sort((a, b) => {
@@ -162,12 +176,19 @@ export default defineComponent({
         return totalB - totalA;
       });
 
-      const labels = sortedAreas.map(area => area.name);
+      const originalLabels = sortedAreas.map(area => String(area.name || ''));
+      fullChartLabels.value = originalLabels;
+
+      const displayLabels = originalLabels.map(name => {
+        if (name.length > 8) {
+          return name.substring(0, 8) + "...";
+        }
+        return name;
+      });
 
       const executedValues = sortedAreas.map(area => parseFloat(area.executed) || 0);
       const pendingValues = sortedAreas.map(area => parseFloat(area.pending) || 0);
       const overdueValues = sortedAreas.map(area => parseFloat(area.overdue) || 0);
-      console.log("Valor executado:", executedValues)
       const datasets = [
         {
           label: 'Executado',
@@ -196,7 +217,7 @@ export default defineComponent({
       ];
 
       chartData.value = {
-        labels,
+        labels: displayLabels,
         datasets,
       };
     };

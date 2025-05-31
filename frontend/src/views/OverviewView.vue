@@ -145,7 +145,7 @@
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
               <v-data-table :headers="headersProjectsSummary" :items="projectsSummary" class="elevation-1"
-                density="compact" hide-default-footer>
+                density="compact">
                 <template v-slot:item.areas="{ item }">
                   <div class="text-caption">
                     {{ formatAreas(item.areas) }}
@@ -171,107 +171,12 @@
               Detalhamento da Destinação
             </v-card-title>
             <v-card-text class="pa-1 pa-sm-3">
-              <v-tabs v-model="activeTab" color="primary">
-                <!-- <v-tab value="institution">Instituição</v-tab> -->
-                <v-tab value="destination">Destinação</v-tab>
-                <!-- <v-tab value="areas">Áreas</v-tab> -->
-              </v-tabs>
-
-              <v-window v-model="activeTab">
-                <v-window-item value="institution">
-                  <v-card flat class="mt-4">
-                    <v-card-text>
-                      <v-row>
-                        <v-col cols="12" md="6">
-                          <v-card outlined class="pa-4">
-                            <div class="text-subtitle-1 font-weight-bold mb-2">Total Recebido por Instituição</div>
-                            <v-list>
-                              <v-list-item v-for="(amount, institution) in institutionSummary" :key="institution">
-                                <v-list-item-title>{{ institution }}</v-list-item-title>
-                                <template v-slot:append>
-                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
-                                </template>
-                              </v-list-item>
-                            </v-list>
-                          </v-card>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                          <v-card outlined class="pa-4">
-                            <div class="text-subtitle-1 font-weight-bold mb-2">Distribuição por Ano</div>
-                            <v-list>
-                              <v-list-item v-for="(amount, year) in yearSummary" :key="year">
-                                <v-list-item-title>{{ year }}</v-list-item-title>
-                                <template v-slot:append>
-                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
-                                </template>
-                              </v-list-item>
-                            </v-list>
-                          </v-card>
-                        </v-col>
-                      </v-row>
-                    </v-card-text>
-                  </v-card>
-                </v-window-item>
-
-                <v-window-item value="destination">
-                  <v-card flat class="mt-4">
-                    <v-card-text>
-                      <v-row>
-                        <v-col cols="12">
-                          <v-card outlined class="pa-4">
-                            <div class="text-subtitle-1 font-weight-bold mb-2">Destinação dos Recursos</div>
-                            <v-list>
-                              <v-list-item v-for="(amount, destination) in destinationSummary" :key="destination">
-                                <v-list-item-title>{{ destination }}</v-list-item-title>
-                                <template v-slot:append>
-                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(amount) }}</span>
-                                </template>
-                              </v-list-item>
-                            </v-list>
-                          </v-card>
-                        </v-col>
-                      </v-row>
-                    </v-card-text>
-                  </v-card>
-                </v-window-item>
-
-                <v-window-item value="areas">
-                  <v-card flat class="mt-4">
-                    <v-card-text>
-                      <v-row>
-                        <v-col cols="12" md="6">
-                          <v-card outlined class="pa-4">
-                            <div class="text-subtitle-1 font-weight-bold mb-2">Distribuição por Área</div>
-                            <v-list>
-                              <v-list-item v-for="area in areasSummary" :key="area.name">
-                                <v-list-item-title>{{ area.name }}</v-list-item-title>
-                                <template v-slot:append>
-                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.budget)
-                                  }}</span>
-                                </template>
-                              </v-list-item>
-                            </v-list>
-                          </v-card>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                          <v-card outlined class="pa-4">
-                            <div class="text-subtitle-1 font-weight-bold mb-2">Execução por Área</div>
-                            <v-list>
-                              <v-list-item v-for="area in areasSummary" :key="area.name">
-                                <v-list-item-title>{{ area.name }}</v-list-item-title>
-                                <template v-slot:append>
-                                  <span class="text-subtitle-1 font-weight-bold">{{ formatCurrency(area.executed)
-                                  }}</span>
-                                </template>
-                              </v-list-item>
-                            </v-list>
-                          </v-card>
-                        </v-col>
-                      </v-row>
-                    </v-card-text>
-                  </v-card>
-                </v-window-item>
-              </v-window>
+              <v-data-table :headers="headersDestinationDetails" :items="destinationTableItems" class="elevation-1"
+                density="compact">
+                <template v-slot:item.amount="{ item }">
+                  <span class="text-end">{{ formatCurrency(item.amount) }}</span>
+                </template>
+              </v-data-table>
             </v-card-text>
           </v-card>
         </v-col>
@@ -312,7 +217,7 @@ export default {
     const chartHeight = ref(getChartHeight());
     const selectedYear = ref(new Date().getFullYear());
     const availableYears = ref([]);
-    const activeTab = ref('institution');
+    // const activeTab = ref('institution');
 
     const headersAreasSummary = [
       { title: "Área", key: "name", align: "start" },
@@ -330,6 +235,11 @@ export default {
       { title: "Areas", key: "areas", align: "start" },
       { title: "Ressarcimento Total Esperado", key: "expected", align: "start" },
       { title: "Quantidade de Parcelas", key: "total_installments", align: "start" },
+    ];
+
+    const headersDestinationDetails = [
+      { title: "Destinação", key: "destination", align: "start" },
+      { title: "Valor", key: "amount", align: "end" },
     ];
 
     const formatAreas = (areas) => {
@@ -512,7 +422,6 @@ export default {
     });
 
     const getSelectedGraphProps = computed(() => {
-      console.log(overview.value)
       const graph = graphs.find(g => g.id === selectedGraph.value);
       if (!graph) return {};
 
@@ -593,8 +502,18 @@ export default {
       return overview.value?.destination_summary || {};
     });
 
+    const destinationTableItems = computed(() => {
+      if (!overview.value?.destination_summary) return [];
+      return Object.entries(overview.value.destination_summary).map(([destination, amount]) => ({
+        destination,
+        amount
+      }));
+    });
+
+
     const projectsSummary = computed(() => {
       return overview.value?.projects_summary || [];
+
     });
 
     const monthlySummary = computed(() => {
@@ -629,12 +548,14 @@ export default {
       selectedYear,
       availableYears,
       handleYearChange,
-      activeTab,
       institutionSummary,
       yearSummary,
       destinationSummary,
       projectsSummary,
       monthlySummary,
+      headersDestinationDetails, // Added
+      destinationTableItems, // Added
+
     };
   },
 };
