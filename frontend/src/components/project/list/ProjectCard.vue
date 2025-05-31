@@ -1,9 +1,5 @@
 <template>
-  <v-card 
-    elevation="2" 
-    class="rounded-lg h-100 project-card" 
-    @click="$emit('click')"
-  >
+  <v-card elevation="2" class="rounded-lg h-100 project-card" @click="$emit('click')">
     <v-card-title class="text-h6">
       <v-icon class="mr-2">mdi-file-document-outline</v-icon>
       {{ project.name }}
@@ -31,12 +27,7 @@
       <v-row no-gutters>
         <v-col cols="12">
           <div class="caption text-uppercase font-weight-bold text-grey mb-1">Situação do Projeto</div>
-          <v-chip
-            :color="getStatusColor"
-            text-color="white"
-            small
-            class="px-2"
-          >
+          <v-chip :color="getStatusColor" text-color="white" small class="px-2">
             <v-icon small left>{{ getStatusIcon }}</v-icon>
             {{ projectStatus }}
           </v-chip>
@@ -62,11 +53,7 @@
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn 
-        color="primary" 
-        text 
-        @click.stop="$emit('click')"
-      >
+      <v-btn color="primary" text @click.stop="$emit('click')">
         Ver Detalhes
         <v-icon right>mdi-arrow-right</v-icon>
       </v-btn>
@@ -103,7 +90,7 @@ const projectStatus = computed(() => {
   const start = new Date(props.project.start_date);
   const end = new Date(props.project.end_date);
   const today = new Date();
-  
+
   if (today < start) return "Não Iniciado";
   if (today > end) return "Concluído";
   return "Em Andamento";
@@ -125,17 +112,17 @@ const remainingTime = computed(() => {
   const start = new Date(props.project.start_date);
   const end = new Date(props.project.end_date);
   const today = new Date();
-  
+
   if (today < start) {
     const daysToStart = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
     return `Inicia em ${daysToStart} dia${daysToStart !== 1 ? 's' : ''}`;
   }
-  
+
   if (today > end) {
     const daysAfterEnd = Math.ceil((today - end) / (1000 * 60 * 60 * 24));
     return `Finalizado há ${daysAfterEnd} dia${daysAfterEnd !== 1 ? 's' : ''}`;
   }
-  
+
   const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
   return `${daysRemaining} dia${daysRemaining !== 1 ? 's' : ''} restante${daysRemaining !== 1 ? 's' : ''}`;
 });

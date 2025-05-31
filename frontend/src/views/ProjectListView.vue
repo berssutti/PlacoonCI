@@ -13,20 +13,10 @@
 
     <v-row class="mt-4">
       <v-col cols="12" md="8">
-        <ProjectFilter
-          :years="years"
-          :initial-filters="initialFilters"
-          @update:filters="updateFilters"
-        />
+        <ProjectFilter :years="years" :initial-filters="initialFilters" @update:filters="updateFilters" />
       </v-col>
       <v-col cols="12" md="4" class="text-right">
-        <v-btn 
-          color="primary"
-          size="x-large"
-          elevation="2" 
-          class="rounded-lg" 
-          @click="goToCreateProject"
-        >
+        <v-btn color="primary" size="x-large" elevation="2" class="rounded-lg" @click="goToCreateProject">
           <v-icon left>mdi-plus</v-icon>
           Cadastrar Novo Projeto
         </v-btn>
@@ -35,38 +25,25 @@
 
     <template v-if="!loading">
       <v-row v-if="filteredProjects.length > 0" class="mt-4">
-        <v-col
-          v-for="project in paginatedProjects"
-          :key="project.id"
-          cols="12"
-          md="4"
-          class="mb-4"
-        >
-          <ProjectCard
-            :project="project"
-            @click="viewProjectDetails(project.id)"
-          />
+        <v-col v-for="project in paginatedProjects" :key="project.id" cols="12" md="4" class="mb-4">
+          <ProjectCard :project="project" @click="viewProjectDetails(project.id)" />
         </v-col>
       </v-row>
-      
+
       <v-row v-else justify="center" class="mt-4">
         <v-col cols="12">
           <v-card elevation="2" class="rounded-lg text-center py-6">
             <v-icon size="64" color="grey lighten-1">mdi-folder-search-outline</v-icon>
             <div class="text-h6 grey--text mt-4">Nenhum projeto encontrado.</div>
-            <div class="text-body-2 grey--text text--lighten-1 mt-2">Tente ajustar os filtros ou criar um novo projeto.</div>
+            <div class="text-body-2 grey--text text--lighten-1 mt-2">Tente ajustar os filtros ou criar um novo projeto.
+            </div>
           </v-card>
         </v-col>
       </v-row>
 
       <v-row v-if="filteredProjects.length > 0" justify="center" class="mt-4">
-        <v-pagination
-          v-model="currentPage"
-          :length="totalPages"
-          total-visible="5"
-          color="primary"
-          circle
-        ></v-pagination>
+        <v-pagination v-model="currentPage" :length="totalPages" total-visible="5" color="primary"
+          circle></v-pagination>
       </v-row>
     </template>
 
@@ -125,11 +102,11 @@ const filteredProjects = computed(() => {
     const projectYearEnd = new Date(project.end_date).getFullYear();
     const isYearInRange =
       (Number(selectedYear.value) >= projectYearStart && Number(selectedYear.value) <= projectYearEnd);
-    
+
     const isKeywordMatch = (project.description + project.name + project.coordinator + project.processo_sei)
       .toLowerCase()
       .includes((searchQuery.value || '').toLowerCase());
-      
+
     return isYearInRange && isKeywordMatch;
   });
 });
@@ -153,7 +130,7 @@ const getProjectStatus = (project) => {
   const start = new Date(project.start_date);
   const end = new Date(project.end_date);
   const today = new Date();
-  
+
   if (today < start) return "Não Iniciado";
   if (today > end) return "Concluído";
   return "Em Andamento";
@@ -177,17 +154,17 @@ const getRemainingTime = (project) => {
   const start = new Date(project.start_date);
   const end = new Date(project.end_date);
   const today = new Date();
-  
+
   if (today < start) {
     const daysToStart = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
     return `Inicia em ${daysToStart} dia${daysToStart !== 1 ? 's' : ''}`;
   }
-  
+
   if (today > end) {
     const daysAfterEnd = Math.ceil((today - end) / (1000 * 60 * 60 * 24));
     return `Finalizado há ${daysAfterEnd} dia${daysAfterEnd !== 1 ? 's' : ''}`;
   }
-  
+
   const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
   return `${daysRemaining} dia${daysRemaining !== 1 ? 's' : ''} restante${daysRemaining !== 1 ? 's' : ''}`;
 };
@@ -204,7 +181,7 @@ const fetchProjects = async () => {
 };
 
 const getYearRange = () => {
-  if (!projects.value || projects.value.length === 0) 
+  if (!projects.value || projects.value.length === 0)
     return [new Date().getFullYear()];
 
   const currentYear = new Date().getFullYear();
@@ -226,7 +203,7 @@ const getYearRange = () => {
 };
 
 const goToCreateProject = () => {
-  router.push({ name: 'ProjectCreate'}); 
+  router.push({ name: 'ProjectCreate' });
 };
 
 const viewProjectDetails = (projectId) => {

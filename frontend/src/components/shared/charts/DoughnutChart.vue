@@ -108,13 +108,13 @@ export default defineComponent({
 
       // Filtrar áreas com valores positivos
       const filteredAreas = this.data.filter(area => area.value > 0);
-      
+
       // Organizar áreas por valor (maior para menor)
       filteredAreas.sort((a, b) => b.value - a.value);
-      
+
       const labels = filteredAreas.map(area => area.name);
       const data = filteredAreas.map(area => area.value);
-      
+
       // Criar array de cores com quantidade suficiente
       const backgroundColors = [];
       for (let i = 0; i < labels.length; i++) {

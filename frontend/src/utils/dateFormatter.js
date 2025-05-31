@@ -13,5 +13,5 @@ export const dateFormatter = (date, locale = 'pt-BR', options = {}) => {
 
     const formatOptions = { ...defaultOptions, ...options };
 
-    return parsedDate.toLocaleDateString(locale, {...formatOptions, timeZone: 'UTC' });
+    return parsedDate.toLocaleDateString(locale, { ...formatOptions, timeZone: 'UTC' });
 };
