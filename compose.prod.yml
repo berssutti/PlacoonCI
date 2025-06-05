@@ -1,0 +1,32 @@
+name: orcamento-execucao-prod
+
+services:
+  db:
+    extends:
+      file: docker-compose.base.yml
+      service: db
+    container_name: orcamento-execucao_db_prod
+    restart: always
+
+  backend:
+    extends:
+      file: docker-compose.base.yml
+      service: backend
+    container_name: orcamento-execucao_backend_prod
+    restart: always
+    ports:
+      - "8000:8000"
+    command: gunicorn orcamento_execucao.wsgi:application --bind 0.0.0.0:8000
+
+  frontend:
+    extends:
+      file: docker-compose.base.yml
+      service: frontend
+    container_name: orcamento-execucao_frontend_prod
+    restart: always
+    command: yarn start
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
