@@ -1,10 +1,13 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Sum
 from datetime import datetime
 from decimal import Decimal
 
+from django.contrib.auth.models import User, Group
 from rest_framework.decorators import action
+from .permissions import IsProfessor, IsFinanceiro, IsGestor, IsAdmin
 from .models import Project, Area, Installment
 from .serializers import (
     ProjectSerializer,
@@ -13,10 +16,53 @@ from .serializers import (
     OverviewSerializer,
 )
 
+from .serializers import UserSerializer 
+
+class UserManagementViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet para listar e gerenciar usuários por um Admin.
+    'ReadOnlyModelViewSet' permite apenas listar e ver detalhes, não editar diretamente.
+    """
+    queryset = User.objects.all().order_by('username')
+    serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
+
+    @action(detail=True, methods=['post'], url_path='set-group')
+    def set_group(self, request, pk=None):
+        """
+        Ação customizada para definir o grupo de um usuário.
+        Acessível via POST /api/manage-users/{user_id}/set-group/
+        """
+        user = self.get_object()
+        group_name = request.data.get('group_name')
+
+        if not group_name:
+            return Response({'error': 'O nome do grupo (group_name) é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            group = Group.objects.get(name=group_name)
+        except Group.DoesNotExist:
+            return Response({'error': f'O grupo "{group_name}" não existe.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.groups.set([group])
+
+        return Response({'status': f'Usuário {user.username} movido para o grupo {group.name}.'}, status=status.HTTP_200_OK)
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("start_date")
     serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == "create":
+            permission_classes = [IsFinanceiro]
+        elif self.action in ['update', 'partial_update']:
+            permission_classes = [IsFinanceiro | IsGestor]
+        elif self.action == "destroy":
+            permission_classes = [IsFinanceiro]
+        else:
+            permission_classes = [IsProfessor | IsFinanceiro | IsGestor]
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -298,10 +344,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
 class AreaViewSet(viewsets.ModelViewSet):
     queryset = Area.objects.all()
     serializer_class = AreaSerializer
+    permission_classes = [IsAuthenticated]
 
 
 class InstallmentViewSet(viewsets.ModelViewSet):
     serializer_class = InstallmentSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         project_id = self.kwargs.get("project_pk")
