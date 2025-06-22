@@ -1,9 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_nested import routers
-from .views import ProjectViewSet, AreaViewSet, InstallmentViewSet
+from .views import ProjectViewSet, AreaViewSet, InstallmentViewSet, UserManagementViewSet
 
 router = DefaultRouter()
+router.register(r'manage-users', UserManagementViewSet, basename='manage-users')
 router.register(r"projects", ProjectViewSet, basename="project")
 router.register(r"areas", AreaViewSet, basename="area")
 
