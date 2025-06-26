@@ -1,8 +1,5 @@
 asgiref==3.8.1
-<<<<<<< HEAD
 attrs==25.3.0
-=======
->>>>>>> d1d82d702b6cf6fcc1e966b8bd517906480119c8
 certifi==2025.6.15
 cffi==1.17.1
 charset-normalizer==3.4.2
