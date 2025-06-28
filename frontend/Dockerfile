@@ -1,4 +1,4 @@
-FROM node:18.20.5
+FROM node:20.19.0
 
 WORKDIR /app
 
@@ -8,4 +8,14 @@ RUN yarn install
 
 COPY . .
 
-CMD ["yarn", "serve"]
+RUN yarn build
+
+FROM nginx:alpine
+
+COPY --from=0 /app/dist /usr/share/nginx/html
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

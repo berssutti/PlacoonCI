@@ -137,7 +137,6 @@ export default defineComponent({
     };
 
     const prepareChartData = () => {
-
       if (!props.data || Object.keys(props.data).length === 0) {
         chartData.value = {
           labels: [],
