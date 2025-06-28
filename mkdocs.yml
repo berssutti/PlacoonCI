@@ -1,0 +1,26 @@
+site_name: Execução Orçamentária
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+
+nav:
+  - "Visão Geral": "index.md"
+  - "Backend":
+      - "Visão Geral": "backend/index.md"
+      - "Models": "backend/models.md"
+      - "API Endpoints": "backend/api.md"
+  - "Frontend":
+      - "Visão Geral": "frontend/index.md"
+      - "Componentes": "frontend/components.md"

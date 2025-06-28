@@ -1,2 +1,6 @@
 pgdata/
 .vscode
+
+# MkDocs
+site/
+*env
