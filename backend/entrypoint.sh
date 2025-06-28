@@ -20,5 +20,10 @@ else
     exit 1
 fi
 
-echo -e "\033[1;32mIniciando o servidor Django...\033[0m"
-exec python manage.py runserver 0.0.0.0:8000
+# python manage.py runserver
+
+echo -e "\033[1;32mColetando arquivos estáticos...\033[0m"
+python manage.py collectstatic --noinput
+
+echo "\033[1;32mIniciando o servidor Django...\033[0m"
+exec gunicorn orcamento_execucao.wsgi:application --bind 0.0.0.0:8000 --workers 3
