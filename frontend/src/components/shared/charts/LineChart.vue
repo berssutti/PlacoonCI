@@ -21,7 +21,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  LineController,
+  LineController
 } from "chart.js";
 
 ChartJS.register(
