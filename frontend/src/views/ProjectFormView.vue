@@ -34,13 +34,13 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProject } from '@/composables/useProject';
 import { useInstallments } from '@/composables/useInstallments';
-import GeneralInfo from '@/components/project/form/GeneralInfo.vue';
-import BudgetInfo from '@/components/project/form/BudgetInfo.vue';
-import ManagementInfo from '@/components/project/form/ManagementInfo.vue';
-import ProjectBudget from '@/components/project/form/ProjectBudget.vue';
-import AreasSection from '@/components/project/form/AreasSection.vue';
-import ActionButtons from '@/components/project/form/ActionButtons.vue';
-import FeedbackSnackbar from '@/components/shared/FeedbackSnackbar.vue';
+import GeneralInfo from '@/components/domain/projects/form/GeneralInfo.vue';
+import BudgetInfo from '@/components/domain/projects/form/BudgetInfo.vue';
+import ManagementInfo from '@/components/domain/projects/form/ManagementInfo.vue';
+import ProjectBudget from '@/components/domain/projects/form/ProjectBudget.vue';
+import AreasSection from '@/components/domain/projects/form/AreasSection.vue';
+import ActionButtons from '@/components/domain/projects/form/ActionButtons.vue';
+import FeedbackSnackbar from '@/components/ui/FeedbackSnackbar.vue';
 
 const props = defineProps({
   id: String

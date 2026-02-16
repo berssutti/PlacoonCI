@@ -66,8 +66,8 @@
 import { ref, computed, onMounted, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProject } from '@/composables/useProject';
-import ProjectFilter from '@/components/project/list/ProjectFilter.vue';
-import ProjectCard from '@/components/project/list/ProjectCard.vue';
+import ProjectFilter from '@/components/domain/projects/list/ProjectFilter.vue';
+import ProjectCard from '@/components/domain/projects/list/ProjectCard.vue';
 
 const router = useRouter();
 const { project: projects, loading, error, fetchProject } = useProject();

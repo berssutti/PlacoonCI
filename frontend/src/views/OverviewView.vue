@@ -190,11 +190,11 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useProject } from "@/composables/useProject";
 import { useInstallments } from "@/composables/useInstallments";
-import BarChart from "@/components/shared/charts/BarChart.vue";
-import LineChart from "@/components/shared/charts/LineChart.vue";
-import DoughnutChart from "@/components/shared/charts/DoughnutChart.vue";
-import StatusDistributionChart from "@/components/shared/charts/StatusDistributionChart.vue";
-import GroupedBarChart from "@/components/shared/charts/GroupedBarChart.vue";
+import BarChart from "@/components/domain/dashboard/charts/BarChart.vue";
+import LineChart from "@/components/domain/dashboard/charts/LineChart.vue";
+import DoughnutChart from "@/components/domain/dashboard/charts/DoughnutChart.vue";
+import StatusDistributionChart from "@/components/domain/dashboard/charts/StatusDistributionChart.vue";
+import GroupedBarChart from "@/components/domain/dashboard/charts/GroupedBarChart.vue";
 import { useOverview } from '@/composables/useOverview';
 import { formatCurrency } from "@/utils/currencyUtils";
 

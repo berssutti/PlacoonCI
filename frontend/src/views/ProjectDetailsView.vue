@@ -37,13 +37,13 @@ import { useProject } from '@/composables/useProject';
 import { useInstallments } from '@/composables/useInstallments';
 import { numberFormatter } from '@/utils/numberFormatter';
 import { dateFormatter } from '@/utils/dateFormatter';
-import ProjectHeader from '@/components/project/details/ProjectHeader.vue';
-import ProjectInfo from '@/components/project/details/ProjectInfo.vue';
-import InstallmentList from '@/components/project/details/installment/InstallmentList.vue';
-import InstallmentForm from '@/components/project/details/installment/InstallmentForm.vue';
-import ProjectInstallmentChart from '@/components/project/details/installment/ProjectInstallmentChart.vue';
-import ConfirmDialog from '@/components/shared/ConfirmDialog.vue';
-import FeedbackSnackbar from '@/components/shared/FeedbackSnackbar.vue';
+import ProjectHeader from '@/components/domain/projects/details/ProjectHeader.vue';
+import ProjectInfo from '@/components/domain/projects/details/ProjectInfo.vue';
+import InstallmentList from '@/components/domain/projects/details/installment/InstallmentList.vue';
+import InstallmentForm from '@/components/domain/projects/details/installment/InstallmentForm.vue';
+import ProjectInstallmentChart from '@/components/domain/projects/details/installment/ProjectInstallmentChart.vue';
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
+import FeedbackSnackbar from '@/components/ui/FeedbackSnackbar.vue';
 
 export default {
     name: 'ProjectDetailsView',
