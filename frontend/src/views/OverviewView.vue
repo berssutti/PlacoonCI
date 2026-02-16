@@ -196,7 +196,7 @@ import DoughnutChart from "@/components/domain/dashboard/charts/DoughnutChart.vu
 import StatusDistributionChart from "@/components/domain/dashboard/charts/StatusDistributionChart.vue";
 import GroupedBarChart from "@/components/domain/dashboard/charts/GroupedBarChart.vue";
 import { useOverview } from '@/composables/useOverview';
-import { formatCurrency } from "@/utils/currencyUtils";
+import { formatCurrency as formatCurrencyUtil } from "@/utils/currencyUtils";
 
 export default {
   name: "OverviewView",
@@ -347,13 +347,7 @@ export default {
       })).filter(area => area.value > 0);
     });
 
-    const formatCurrency = (value) => {
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-        maximumFractionDigits: windowWidth.value < 600 ? 0 : 2,
-      }).format(value);
-    };
+    const formatCurrency = (value) => formatCurrencyUtil(value);
 
     const getProgressColor = (percentage) => {
       if (percentage < 30) return "error";

@@ -26,7 +26,9 @@ export function useProject() {
 
         try {
             await projectService.deleteProject(id);
-            project.value = project.value.filter(project => project.id !== id);
+            if (Array.isArray(project.value)) {
+                project.value = project.value.filter(project => project.id !== id);
+            }
         } catch (err) {
             error.value = 'Erro ao deletar projeto';
             console.error(err);

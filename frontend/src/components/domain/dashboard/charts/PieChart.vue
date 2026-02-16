@@ -2,7 +2,7 @@
   <div class="chart-container">
     <h3 class="chart-title">{{ graphTitle }}</h3>
     <div class="chart-wrapper">
-      <pie :data="chartData" :options="chartOptions" />
+      <BasePieChart v-if="chartData" :chart-data="chartData" :options="chartOptions" />
     </div>
     <div v-if="chartData && chartData.datasets.length === 0" class="no-data">
       <p>Não há dados para exibir.</p>
@@ -10,96 +10,73 @@
   </div>
 </template>
 
-<script>
-import { defineComponent } from "vue";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import { Pie } from "vue-chartjs";
+<script setup>
+import { ref, watch } from "vue";
+import BasePieChart from "@/components/ui/charts/BasePieChart.vue";
+import { formatCurrency } from "@/utils/currencyUtils";
 
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-export default defineComponent({
-  name: "PieChart",
-  components: { Pie },
-  props: {
-    data: {
-      type: Array,
-      required: true,
-    },
-    graphTitle: {
-      type: String,
-      required: true,
-    },
+const props = defineProps({
+  data: {
+    type: Array,
+    required: true,
   },
-  data() {
-    return {
-      chartData: null,
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "top",
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const label = context.label || "";
-                const value = context.raw || 0;
-                return `${label}: ${this.formatCurrency(value)}`;
-              },
-            },
-          },
-        },
-      },
-    };
-  },
-  watch: {
-    data: {
-      handler() {
-        this.prepareChartData();
-      },
-      deep: true,
-      immediate: true,
-    },
-  },
-  methods: {
-    formatCurrency(value) {
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(value);
-    },
-    prepareChartData() {
-      if (!this.data || this.data.length === 0) {
-        this.chartData = {
-          labels: [],
-          datasets: [],
-        };
-        return;
-      }
-
-      const labels = this.data.map((area) => area.name);
-      const data = this.data.map((area) => area.allocated);
-
-      this.chartData = {
-        labels,
-        datasets: [
-          {
-            label: "Orçamento Alocado",
-            data,
-            backgroundColor: [
-              "#4CAF50",
-              "#FFC107",
-              "#2196F3",
-              "#9C27B0",
-              "#F44336",
-            ],
-          },
-        ],
-      };
-    },
+  graphTitle: {
+    type: String,
+    required: true,
   },
 });
+
+const chartData = ref(null);
+const chartOptions = {
+  plugins: {
+    legend: {
+      position: "top",
+    },
+    tooltip: {
+      callbacks: {
+        label: (context) => {
+          const label = context.label || "";
+          const value = context.raw || 0;
+          return `${label}: ${formatCurrency(value)}`;
+        },
+      },
+    },
+  },
+};
+
+const prepareChartData = () => {
+  if (!props.data || props.data.length === 0) {
+    chartData.value = {
+      labels: [],
+      datasets: [],
+    };
+    return;
+  }
+
+  const labels = props.data.map((area) => area.name);
+  const data = props.data.map((area) => area.allocated);
+
+  chartData.value = {
+    labels,
+    datasets: [
+      {
+        label: "Orçamento Alocado",
+        data,
+        backgroundColor: [
+          "#4CAF50",
+          "#FFC107",
+          "#2196F3",
+          "#9C27B0",
+          "#F44336",
+        ],
+      },
+    ],
+  };
+};
+
+watch(() => props.data, () => {
+  prepareChartData();
+}, { deep: true, immediate: true });
 </script>
 
 <style scoped>

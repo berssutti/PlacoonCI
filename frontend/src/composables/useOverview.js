@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import axios from 'axios';
+import { overviewService } from '@/services/overviewService';
 
 export function useOverview() {
   const overview = ref(null);
@@ -11,7 +11,7 @@ export function useOverview() {
     error.value = null;
 
     try {
-      const response = await axios.get(`http://localhost:8000/api/projects/overview/?year=${year}`);
+      const response = await overviewService.getOverview(year);
       overview.value = response.data;
     } catch (err) {
       error.value = err.message || 'Erro ao carregar dados da visão geral';

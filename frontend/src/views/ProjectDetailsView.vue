@@ -4,11 +4,10 @@
             <ProjectHeader :project="project" @edit="handleEditProject" @delete="showDeleteProjectDialog = true"
                 @back="handleBack" />
 
-            <ProjectInfo v-if="project" :project="project" :formatDate="formatDate" :formatNumber="formatNumber" />
+            <ProjectInfo v-if="project" :project="project" />
 
-            <InstallmentList :installments="installments" :formatDate="formatDate" :formatNumber="formatNumber"
-                @add="handleAddInstallment" @edit="handleEditInstallment" @delete="handleShowDeleteInstallmentDialog"
-                @chart="handleProjectInstallmentChart" />
+            <InstallmentList :installments="installments" @add="handleAddInstallment" @edit="handleEditInstallment"
+                @delete="handleShowDeleteInstallmentDialog" @chart="handleProjectInstallmentChart" />
 
             <InstallmentForm v-model="showInstallmentForm" :installment="currentInstallment" :isEditing="isEditing"
                 @save="handleSaveInstallment" @close="handleCloseInstallmentForm" />
@@ -35,8 +34,6 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProject } from '@/composables/useProject';
 import { useInstallments } from '@/composables/useInstallments';
-import { numberFormatter } from '@/utils/numberFormatter';
-import { dateFormatter } from '@/utils/dateFormatter';
 import ProjectHeader from '@/components/domain/projects/details/ProjectHeader.vue';
 import ProjectInfo from '@/components/domain/projects/details/ProjectInfo.vue';
 import InstallmentList from '@/components/domain/projects/details/installment/InstallmentList.vue';
@@ -77,8 +74,7 @@ export default {
             color: 'success'
         });
 
-        const formatNumber = (num) => numberFormatter(num);
-        const formatDate = (date) => dateFormatter(date);
+
 
         const handleBack = () => router.push({ name: 'ProjectList' });
 
@@ -198,8 +194,7 @@ export default {
             projectLoading,
             installments,
             installmentsLoading,
-            formatNumber,
-            formatDate,
+
             handleBack,
             showInstallmentForm,
             showProjectInstallmentChart,

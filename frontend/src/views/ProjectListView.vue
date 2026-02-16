@@ -63,9 +63,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watchEffect } from 'vue';
+import { ref, watchEffect, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProject } from '@/composables/useProject';
+import { useProjectFilter } from '@/composables/useProjectFilter';
 import ProjectFilter from '@/components/domain/projects/list/ProjectFilter.vue';
 import ProjectCard from '@/components/domain/projects/list/ProjectCard.vue';
 
@@ -88,119 +89,33 @@ if (savedState) {
   };
 }
 
-const searchQuery = ref(initialFilters.value.searchQuery);
-const selectedYear = ref(initialFilters.value.selectedYear);
 const years = ref([]);
-const currentPage = ref(initialFilters.value.currentPage);
-const itemsPerPage = 6;
 
-const filteredProjects = computed(() => {
-  if (!projects.value) return [];
+const {
+  searchQuery,
+  selectedYear,
+  currentPage,
+  filteredProjects,
+  paginatedProjects,
+  totalPages,
+  getYearRange
+} = useProjectFilter(projects);
 
-  return projects.value.filter((project) => {
-    const projectYearStart = new Date(project.start_date).getFullYear();
-    const projectYearEnd = new Date(project.end_date).getFullYear();
-    const isYearInRange =
-      (Number(selectedYear.value) >= projectYearStart && Number(selectedYear.value) <= projectYearEnd);
+// Initialize filters from saved state
+searchQuery.value = initialFilters.value.searchQuery;
+selectedYear.value = initialFilters.value.selectedYear;
+currentPage.value = initialFilters.value.currentPage;
 
-    const isKeywordMatch = (project.description + project.name + project.coordinator + project.processo_sei)
-      .toLowerCase()
-      .includes((searchQuery.value || '').toLowerCase());
-
-    return isYearInRange && isKeywordMatch;
-  });
+// Watch for changes in projects to update years list
+watchEffect(() => {
+  if (projects.value && projects.value.length > 0) {
+    years.value = getYearRange(projects.value);
+  } else {
+    years.value = [new Date().getFullYear()];
+  }
 });
 
-const paginatedProjects = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  return filteredProjects.value.slice(start, end);
-});
 
-const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(filteredProjects.value.length / itemsPerPage));
-});
-
-const formatDate = (dateString) => {
-  const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-  return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR', options);
-};
-
-const getProjectStatus = (project) => {
-  const start = new Date(project.start_date);
-  const end = new Date(project.end_date);
-  const today = new Date();
-
-  if (today < start) return "Não Iniciado";
-  if (today > end) return "Concluído";
-  return "Em Andamento";
-};
-
-const getStatusColor = (project) => {
-  const status = getProjectStatus(project);
-  if (status === "Não Iniciado") return "grey";
-  if (status === "Em Andamento") return "primary";
-  return "success";
-};
-
-const getStatusIcon = (project) => {
-  const status = getProjectStatus(project);
-  if (status === "Não Iniciado") return "mdi-clock-outline";
-  if (status === "Em Andamento") return "mdi-progress-clock";
-  return "mdi-check-circle-outline";
-};
-
-const getRemainingTime = (project) => {
-  const start = new Date(project.start_date);
-  const end = new Date(project.end_date);
-  const today = new Date();
-
-  if (today < start) {
-    const daysToStart = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
-    return `Inicia em ${daysToStart} dia${daysToStart !== 1 ? 's' : ''}`;
-  }
-
-  if (today > end) {
-    const daysAfterEnd = Math.ceil((today - end) / (1000 * 60 * 60 * 24));
-    return `Finalizado há ${daysAfterEnd} dia${daysAfterEnd !== 1 ? 's' : ''}`;
-  }
-
-  const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-  return `${daysRemaining} dia${daysRemaining !== 1 ? 's' : ''} restante${daysRemaining !== 1 ? 's' : ''}`;
-};
-
-const fetchProjects = async () => {
-  try {
-    await fetchProject();
-    years.value = getYearRange();
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    loading.value = false;
-  }
-};
-
-const getYearRange = () => {
-  if (!projects.value || projects.value.length === 0)
-    return [new Date().getFullYear()];
-
-  const currentYear = new Date().getFullYear();
-  let maxEndYear = currentYear;
-  let minStartYear = currentYear;
-
-  projects.value.forEach(project => {
-    const projectEndDate = new Date(project.end_date + 'T00:00:00');
-    const projectStartDate = new Date(project.start_date + 'T00:00:00');
-
-    const projectEndYear = projectEndDate.getFullYear();
-    const projectStartYear = projectStartDate.getFullYear();
-
-    maxEndYear = Math.max(maxEndYear, projectEndYear);
-    minStartYear = Math.min(minStartYear, projectStartYear);
-  });
-
-  return Array.from({ length: maxEndYear - minStartYear + 1 }, (_, i) => minStartYear + i);
-};
 
 const goToCreateProject = () => {
   router.push({ name: 'ProjectCreate' });
@@ -229,7 +144,9 @@ const updateFilters = (filters) => {
   sessionStorage.setItem('projectsListState', JSON.stringify(state));
 };
 
-onMounted(fetchProjects);
+onMounted(() => {
+  fetchProject();
+});
 </script>
 
 <style scoped>
