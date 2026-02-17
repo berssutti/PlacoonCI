@@ -19,7 +19,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().prefetch_related("projectarea_set__area")
         year = self.request.query_params.get("active_year", None)
 
         if year:
@@ -326,7 +326,11 @@ class InstallmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         project_id = self.kwargs.get("project_pk")
-        queryset = Installment.objects.filter(project_id=project_id)
+        queryset = (
+            Installment.objects.filter(project_id=project_id)
+            .select_related("project")
+            .prefetch_related("project__projectarea_set__area")
+        )
 
         year = self.request.query_params.get("year", None)
         if year:
