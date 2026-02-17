@@ -9,6 +9,10 @@ export const projectService = {
         return api.get('/projects/', { params });
     },
 
+    getAvailableYears() {
+        return api.get('/projects/available-years/');
+    },
+
     getProject(id) {
         return api.get(`/projects/${id}/`);
     },

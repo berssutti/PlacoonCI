@@ -39,6 +39,28 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    @action(detail=False, methods=["get"], url_path="available-years")
+    def available_years(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        years = set()
+        for project in queryset:
+            if project.start_date:
+                start_year = project.start_date.year
+                end_year = project.end_date.year if project.end_date else datetime.now().year
+                for year in range(start_year, end_year + 1):
+                    years.add(year)
+        
+        sorted_years = sorted(list(years), reverse=True)
+        # Ensure current year is included if list is empty
+        if not sorted_years:
+            sorted_years = [datetime.now().year]
+            
+        return Response({
+            "years": sorted_years,
+            "count": queryset.count()
+        })
+
     @action(detail=False, methods=["get"])
     def overview(self, request):
         year = request.query_params.get("year", None)
@@ -57,77 +79,84 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 {"error": "Invalid year format"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        projects = self.get_queryset().filter(
-            Q(start_date__lte=end_of_year)
-            & (Q(end_date__gte=start_of_year) | Q(end_date__isnull=True))
+        # Optimization: Fetch projects with their areas in one query
+        projects = list(
+            self.get_queryset()
+            .filter(
+                Q(start_date__lte=end_of_year)
+                & (Q(end_date__gte=start_of_year) | Q(end_date__isnull=True))
+            )
+            .prefetch_related("projectarea_set__area")
         )
 
-        installments = Installment.objects.filter(
-            project__in=projects,
-            effective_date__gte=start_of_year,
-            effective_date__lte=end_of_year,
-            status="Quitada",
-        )
+        project_ids = [p.id for p in projects]
 
-        total_expected = float(
-            sum(installment.amount or 0 for installment in installments)
-        )
+        # Optimization: Fetch all relevant installments in one query
+        # We fetch a superset of installments needed for all metrics to avoid multiple DB hits
+        all_installments = Installment.objects.filter(
+            project_id__in=project_ids
+        ).filter(
+            Q(effective_date__range=(start_of_year, end_of_year), status="Quitada")
+            | Q(
+                estimated_date__range=(start_of_year, end_of_year),
+                status__in=["Pendente", "Atrasada"],
+            )
+        ).select_related("project")
 
-        total_executed = float(
-            sum(installment.amount or 0 for installment in installments)
-        )
+        # In-memory categorization
+        installments_executed = []
+        installments_pending = []
+        installments_overdue = []
 
-        pending_installments = Installment.objects.filter(
-            project__in=projects,
-            estimated_date__gte=start_of_year,
-            estimated_date__lte=end_of_year,
-            effective_date__isnull=True,
-            status__in=["Pendente"],
-        )
-        total_pending = float(
-            sum(installment.amount or 0 for installment in pending_installments)
-        )
+        # Maps for quick lookup per project
+        project_executed_map = {p_id: [] for p_id in project_ids}
+        project_pending_map = {p_id: [] for p_id in project_ids}
+        project_overdue_map = {p_id: [] for p_id in project_ids}
 
-        overdue_installments = Installment.objects.filter(
-            project__in=projects,
-            estimated_date__gte=start_of_year,
-            estimated_date__lte=end_of_year,
-            status="Atrasada",
-        )
-        total_overdue = float(
-            sum(installment.amount or 0 for installment in overdue_installments)
-        )
+        for inst in all_installments:
+            is_in_executed_range = (
+                inst.effective_date
+                and start_of_year.date() <= inst.effective_date <= end_of_year.date()
+            )
+            is_in_estimated_range = (
+                inst.estimated_date
+                and start_of_year.date() <= inst.estimated_date <= end_of_year.date()
+            )
 
+            if inst.status == "Quitada" and is_in_executed_range:
+                installments_executed.append(inst)
+                project_executed_map[inst.project_id].append(inst)
+            
+            elif inst.status == "Pendente" and is_in_estimated_range and inst.effective_date is None:
+                installments_pending.append(inst)
+                project_pending_map[inst.project_id].append(inst)
+            
+            elif inst.status == "Atrasada" and is_in_estimated_range:
+                installments_overdue.append(inst)
+                project_overdue_map[inst.project_id].append(inst)
+
+        # Helper to sum amounts
+        def sum_amounts(inst_list):
+            return float(sum(inst.amount or 0 for inst in inst_list))
+
+        total_executed = sum_amounts(installments_executed)
+        total_pending = sum_amounts(installments_pending)
+        total_overdue = sum_amounts(installments_overdue)
         total_expected = total_executed + total_pending + total_overdue
 
+        # Projects Summary
         projects_summary = []
         for project in projects:
-            project_installments = installments.filter(project=project)
-            project_pending_installments = pending_installments.filter(project=project)
-            project_overdue_installments = overdue_installments.filter(project=project)
+            p_exec = project_executed_map[project.id]
+            p_pend = project_pending_map[project.id]
+            p_over = project_overdue_map[project.id]
 
-            total_installments = (
-                project_installments.count()
-                + project_pending_installments.count()
-                + project_overdue_installments.count()
-            )
+            val_executed = sum_amounts(p_exec)
+            val_pending = sum_amounts(p_pend)
+            val_overdue = sum_amounts(p_over)
+            
+            total_installments_count = len(p_exec) + len(p_pend) + len(p_over)
 
-            project_executed = float(
-                sum(installment.amount or 0 for installment in project_installments)
-            )
-            project_pending = float(
-                sum(
-                    installment.amount or 0
-                    for installment in project_pending_installments
-                )
-            )
-            project_overdue = float(
-                sum(
-                    installment.amount or 0
-                    for installment in project_overdue_installments
-                )
-            )
-            project_expected = project_executed + project_pending + project_overdue
             project_coordinator = (
                 project.coordinator if project.coordinator else "Não especificado"
             )
@@ -136,6 +165,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 if project.start_date
                 else "Não especificado"
             )
+            # No DB hit here due to prefetch
             areas_name_list = [
                 project_area.area.name for project_area in project.projectarea_set.all()
             ]
@@ -143,138 +173,129 @@ class ProjectViewSet(viewsets.ModelViewSet):
             projects_summary.append(
                 {
                     "name": project.name,
-                    "expected": project_expected,
-                    "executed": project_executed,
-                    "pending": project_pending,
-                    "overdue": project_overdue,
+                    "expected": val_executed + val_pending + val_overdue,
+                    "executed": val_executed,
+                    "pending": val_pending,
+                    "overdue": val_overdue,
                     "coordinator": project_coordinator,
                     "start_date": project_start_date,
                     "areas": areas_name_list,
-                    "total_installments": total_installments,
+                    "total_installments": total_installments_count,
                 }
             )
 
-        areas_summary = []
+        # Areas Summary
+        areas_summary_map = {} # name -> data dict
+        
+        # We reuse the previously categorized lists
+        # But we need to iterate projects to get area percentages
+        
+        # To avoid N*M complexity, we can iterate projects and their specific installs
         for project in projects:
-            project_installments = installments.filter(project=project)
-            project_pending_installments = pending_installments.filter(project=project)
-            project_overdue_installments = overdue_installments.filter(project=project)
+            p_areas = project.projectarea_set.all()
+            if not p_areas:
+                continue
 
-            for project_area in project.projectarea_set.all():
-                area_name = project_area.area.name
-                area_data = next(
-                    (item for item in areas_summary if item["name"] == area_name), None
-                )
+            # Function to distribute amount to areas
+            def distribute_to_areas(installs, field_key):
+                for inst in installs:
+                    amount = Decimal(str(inst.amount or 0))
+                    for pa in p_areas:
+                        area_name = pa.area.name
+                        if area_name not in areas_summary_map:
+                            areas_summary_map[area_name] = {
+                                "name": area_name,
+                                "budget": 0.0,
+                                "executed": 0.0,
+                                "pending": 0.0,
+                                "overdue": 0.0,
+                                "progress": 0.0,
+                            }
+                        
+                        share = amount * (pa.percentage / Decimal("100"))
+                        areas_summary_map[area_name][field_key] += float(share)
 
-                if not area_data:
-                    area_data = {
-                        "name": area_name,
-                        "budget": 0,
-                        "executed": 0,
-                        "pending": 0,
-                        "overdue": 0,
-                        "progress": 0,
-                    }
-                    areas_summary.append(area_data)
+            distribute_to_areas(project_executed_map[project.id], "executed")
+            distribute_to_areas(project_pending_map[project.id], "pending")
+            distribute_to_areas(project_overdue_map[project.id], "overdue")
 
-                for installment in project_installments:
-                    amount = installment.amount or 0
-                    area_amount = Decimal(str(amount)) * (
-                        project_area.percentage / Decimal("100")
-                    )
-                    area_data["executed"] += float(area_amount)
+        # Calculate budget and progress for areas
+        areas_summary = []
+        for name, data in areas_summary_map.items():
+            data["budget"] = data["executed"] + data["pending"] + data["overdue"]
+            data["progress"] = (
+                (data["executed"] / data["budget"] * 100)
+                if data["budget"] > 0
+                else 0
+            )
+            areas_summary.append(data)
 
-                for installment in project_pending_installments:
-                    amount = installment.amount or 0
-                    area_amount = Decimal(str(amount)) * (
-                        project_area.percentage / Decimal("100")
-                    )
-                    area_data["pending"] += float(area_amount)
-
-                for installment in project_overdue_installments:
-                    amount = installment.amount or 0
-                    area_amount = Decimal(str(amount)) * (
-                        project_area.percentage / Decimal("100")
-                    )
-                    area_data["overdue"] += float(area_amount)
-
-                area_data["budget"] = (
-                    area_data["executed"] + area_data["pending"] + area_data["overdue"]
-                )
-                area_data["progress"] = (
-                    (area_data["executed"] / area_data["budget"] * 100)
-                    if area_data["budget"] > 0
-                    else 0
-                )
-
+        # Monthly Summary
         monthly_summary = {}
         for month in range(1, 13):
-            month_start = datetime(year, month, 1)
-            month_end = (
-                datetime(year, month + 1, 1) if month < 12 else datetime(year + 1, 1, 1)
-            )
-            month_installments = installments.filter(
-                effective_date__gte=month_start,
-                effective_date__lt=month_end,
-                status="Quitada",  # Apenas parcelas quitadas
-            )
-            monthly_summary[month] = float(
-                sum(installment.amount or 0 for installment in month_installments)
-            )
+            monthly_summary[month] = 0.0
+        
+        for inst in installments_executed:
+            m = inst.effective_date.month
+            monthly_summary[m] += float(inst.amount or 0)
 
-        monthly_area_summary = {}
-        for month in range(1, 13):
-            month_start = datetime(year, month, 1)
-            month_end = (
-                datetime(year, month + 1, 1) if month < 12 else datetime(year + 1, 1, 1)
-            )
+        # Monthly Area Summary
+        monthly_area_summary = {m: {} for m in range(1, 13)}
 
-            month_installments = installments.filter(
-                effective_date__gte=month_start,
-                effective_date__lt=month_end,
-                status="Quitada",  # Apenas parcelas quitadas
-            )
+        for project in projects:
+             p_exec = project_executed_map[project.id]
+             p_areas = project.projectarea_set.all()
+             
+             for inst in p_exec:
+                 m = inst.effective_date.month
+                 amount = Decimal(str(inst.amount or 0))
+                 
+                 for pa in p_areas:
+                     area_name = pa.area.name
+                     if area_name not in monthly_area_summary[m]:
+                         monthly_area_summary[m][area_name] = 0
+                     
+                     share = amount * (pa.percentage / Decimal("100"))
+                     monthly_area_summary[m][area_name] += float(share)
+        
+        # Institution Summary & Year Summary form all time executed?
+        # Original code:
+        # executed_installments = installments.filter(
+        #    effective_date__isnull=False, status="Quitada"
+        # )
+        # Wait! The original code re-defined `executed_installments` using `installments` variable
+        # But `installments` variable was filtered by YEAR!
+        # "effective_date__lte=end_of_year"
+        # So it was ONLY for this year?
+        # Let's check lines 256-258 of original file.
+        # executed_installments = installments.filter(...)
+        # `installments` was lines 65-70: filtered by year.
+        # So yes, limits to this year.
+        
+        institution_summary = {"FCTE": total_executed} # Sum of execution for this year
 
-            monthly_area_summary[month] = {}
-
-            for project in projects:
-                project_installments = month_installments.filter(project=project)
-
-                for project_area in project.projectarea_set.all():
-                    area_name = project_area.area.name
-
-                    area_amount = sum(
-                        Decimal(str(installment.amount or 0))
-                        * (project_area.percentage / Decimal("100"))
-                        for installment in project_installments
-                    )
-
-                    if area_name not in monthly_area_summary[month]:
-                        monthly_area_summary[month][area_name] = 0
-                    monthly_area_summary[month][area_name] += float(area_amount)
-
-        executed_installments = installments.filter(
-            effective_date__isnull=False, status="Quitada"
-        )
-        institution_summary = {
-            "FCTE": float(
-                sum(installment.amount or 0 for installment in executed_installments)
-            )
-        }
-
+        # Year Summary
+        # Original code used `executed_installments` (which is filtered by current year)
+        # to grouping by year.
+        # So `year_summary` would only contain the current year?
+        # "year = installment.effective_date.year"
+        # If effective_date is in 2026, then year is 2026.
+        # So it returns {2026: total}.
+        # This seems redundant but I will preserve behavior.
         year_summary = {}
-        for installment in executed_installments:
-            year = installment.effective_date.year
-            if year not in year_summary:
-                year_summary[year] = 0
-            year_summary[year] += float(installment.amount or 0)
+        for inst in installments_executed:
+            y = inst.effective_date.year
+            if y not in year_summary:
+                year_summary[y] = 0
+            year_summary[y] += float(inst.amount or 0)
 
+        # Destination Summary
         destination_summary = {}
-        for installment in executed_installments:
-            destination = installment.destination or "Não especificado"
+        for inst in installments_executed:
+            destination = inst.destination or "Não especificado"
             if destination not in destination_summary:
                 destination_summary[destination] = 0
-            destination_summary[destination] += float(installment.amount or 0)
+            destination_summary[destination] += float(inst.amount or 0)
 
         data = {
             "total_expected": total_expected,
