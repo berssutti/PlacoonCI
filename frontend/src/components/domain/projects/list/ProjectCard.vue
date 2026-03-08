@@ -27,8 +27,8 @@
       <v-row no-gutters>
         <v-col cols="12">
           <div class="caption text-uppercase font-weight-bold text-grey mb-1">Situação do Projeto</div>
-          <v-chip :color="getStatusColor" text-color="white" small class="px-2">
-            <v-icon small left>{{ getStatusIcon }}</v-icon>
+          <v-chip :color="getStatusColor(projectStatus)" text-color="white" small class="px-2">
+            <v-icon small left>{{ getStatusIcon(projectStatus) }}</v-icon>
             {{ projectStatus }}
           </v-chip>
           <div class="mt-2 text-caption">
@@ -63,6 +63,9 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useProjectStatus } from '@/composables/useProjectStatus';
+import { formatCurrency } from '@/utils/currencyUtils';
+import { dateFormatter } from '@/utils/dateFormatter';
 
 const props = defineProps({
   project: {
@@ -73,59 +76,12 @@ const props = defineProps({
 
 defineEmits(['click']);
 
-const formatDate = (dateString) => {
-  const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-  return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR', options);
-};
+const { getProjectStatus, getStatusColor, getStatusIcon, getRemainingTime } = useProjectStatus();
 
-const formatCurrency = (value) => {
-  if (!value) return 'R$ 0,00';
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(value);
-};
+const formatDate = (date) => dateFormatter(date);
 
-const projectStatus = computed(() => {
-  const start = new Date(props.project.start_date);
-  const end = new Date(props.project.end_date);
-  const today = new Date();
-
-  if (today < start) return "Não Iniciado";
-  if (today > end) return "Concluído";
-  return "Em Andamento";
-});
-
-const getStatusColor = computed(() => {
-  if (projectStatus.value === "Não Iniciado") return "grey";
-  if (projectStatus.value === "Em Andamento") return "primary";
-  return "success";
-});
-
-const getStatusIcon = computed(() => {
-  if (projectStatus.value === "Não Iniciado") return "mdi-clock-outline";
-  if (projectStatus.value === "Em Andamento") return "mdi-progress-clock";
-  return "mdi-check-circle-outline";
-});
-
-const remainingTime = computed(() => {
-  const start = new Date(props.project.start_date);
-  const end = new Date(props.project.end_date);
-  const today = new Date();
-
-  if (today < start) {
-    const daysToStart = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
-    return `Inicia em ${daysToStart} dia${daysToStart !== 1 ? 's' : ''}`;
-  }
-
-  if (today > end) {
-    const daysAfterEnd = Math.ceil((today - end) / (1000 * 60 * 60 * 24));
-    return `Finalizado há ${daysAfterEnd} dia${daysAfterEnd !== 1 ? 's' : ''}`;
-  }
-
-  const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-  return `${daysRemaining} dia${daysRemaining !== 1 ? 's' : ''} restante${daysRemaining !== 1 ? 's' : ''}`;
-});
+const projectStatus = computed(() => getProjectStatus(props.project));
+const remainingTime = computed(() => getRemainingTime(props.project));
 </script>
 
 <style scoped>

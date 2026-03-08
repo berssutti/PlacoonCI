@@ -56,6 +56,8 @@
 
 <script>
 import { ref, defineComponent, toRefs } from 'vue';
+import { dateFormatter } from '@/utils/dateFormatter';
+import { numberFormatter } from '@/utils/numberFormatter';
 
 export default defineComponent({
   name: 'InstallmentList',
@@ -65,18 +67,13 @@ export default defineComponent({
       required: true,
       default: () => [],
     },
-    formatDate: {
-      type: Function,
-      required: true,
-    },
-    formatNumber: {
-      type: Function,
-      required: true,
-    },
   },
   emits: ['add', 'edit', 'delete', 'chart'],
   setup(props, { emit }) {
-    const { installments, formatDate, formatNumber } = toRefs(props);
+    const { installments } = toRefs(props);
+
+    const formatDate = (date) => dateFormatter(date);
+    const formatNumber = (num) => numberFormatter(num);
 
     const expandedIndex = ref(null);
 

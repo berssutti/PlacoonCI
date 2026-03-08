@@ -96,8 +96,9 @@
 </template>
 
 <script>
-import { watch } from 'vue';
 import { toRef } from 'vue';
+import { dateFormatter } from '@/utils/dateFormatter';
+import { numberFormatter } from '@/utils/numberFormatter';
 
 export default {
   name: 'ProjectInfo',
@@ -105,30 +106,18 @@ export default {
     project: {
       type: Object,
       required: true
-    },
-    formatDate: {
-      type: Function,
-      required: true
-    },
-    formatNumber: {
-      type: Function,
-      required: true
     }
   },
   setup(props) {
     const project = toRef(props, 'project');
-    watch(
-      () => props.project.total_fcte_amount_expected,
-    );
 
-    watch(
-      () => props.project,
-      { deep: true }
-    );
+    const formatDate = (date) => dateFormatter(date);
+    const formatNumber = (num) => numberFormatter(num);
+
     return {
       project,
-      formatDate: props.formatDate,
-      formatNumber: props.formatNumber,
+      formatDate,
+      formatNumber,
     };
   }
 };

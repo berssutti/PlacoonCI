@@ -21,7 +21,7 @@
 
           <v-divider class="my-4"></v-divider>
 
-          <ActionButtons @cancel="$router.back()" @save="saveProject" />
+          <FormActions @cancel="$router.back()" @save="saveProject" />
         </v-form>
       </v-card-text>
       <FeedbackSnackbar v-model="snackbar.show" :message="snackbar.text" :color="snackbar.color" />
@@ -34,13 +34,14 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProject } from '@/composables/useProject';
 import { useInstallments } from '@/composables/useInstallments';
-import GeneralInfo from '@/components/project/form/GeneralInfo.vue';
-import BudgetInfo from '@/components/project/form/BudgetInfo.vue';
-import ManagementInfo from '@/components/project/form/ManagementInfo.vue';
-import ProjectBudget from '@/components/project/form/ProjectBudget.vue';
-import AreasSection from '@/components/project/form/AreasSection.vue';
-import ActionButtons from '@/components/project/form/ActionButtons.vue';
-import FeedbackSnackbar from '@/components/shared/FeedbackSnackbar.vue';
+import { useAreas } from '@/composables/useAreas';
+import GeneralInfo from '@/components/domain/projects/form/GeneralInfo.vue';
+import BudgetInfo from '@/components/domain/projects/form/BudgetInfo.vue';
+import ManagementInfo from '@/components/domain/projects/form/ManagementInfo.vue';
+import ProjectBudget from '@/components/domain/projects/form/ProjectBudget.vue';
+import AreasSection from '@/components/domain/projects/form/AreasSection.vue';
+import FormActions from '@/components/ui/FormActions.vue';
+import FeedbackSnackbar from '@/components/ui/FeedbackSnackbar.vue';
 
 const props = defineProps({
   id: String
@@ -49,6 +50,7 @@ const props = defineProps({
 const router = useRouter();
 const { project: projectData, loading: projectLoading, error: projectError, fetchProject } = useProject();
 const { installments, loading: installmentsLoading, error: installmentsError, fetchInstallments } = useInstallments();
+const { areas: areaList, fetchAreas, getAreaIdByName, getAreaNameById } = useAreas();
 
 const project = ref({
   name: '',
@@ -68,7 +70,7 @@ const project = ref({
   areas: [],
 });
 
-const areaList = ref([]);
+
 const isEditing = ref(false);
 const snackbar = ref({
   show: false,
@@ -110,25 +112,7 @@ const fetchProjectDetails = async () => {
   }
 };
 
-const fetchAreas = async () => {
-  try {
-    const response = await fetch('http://localhost:8000/api/areas/');
-    if (!response.ok) throw new Error('Erro ao buscar lista de áreas');
-    areaList.value = await response.json();
-  } catch (error) {
-    console.error('Erro:', error);
-  }
-};
 
-const getAreaIdByName = (areaName) => {
-  const area = areaList.value.find((item) => item.name === areaName);
-  return area ? area.id : null;
-};
-
-const getAreaNameById = (areaId) => {
-  const area = areaList.value.find((item) => item.id === areaId);
-  return area ? area.name : '';
-};
 
 const addArea = () => {
   project.value.areas.push({ name: '', percentage: 0 });

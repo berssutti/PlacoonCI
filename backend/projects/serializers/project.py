@@ -1,13 +1,5 @@
 from rest_framework import serializers
-from .models import Project, Area, ProjectArea, Installment
-
-from decimal import Decimal
-
-
-class AreaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Area
-        fields = ["id", "name", "projects"]
+from ..models import Project, Area, ProjectArea
 
 
 class ProjectAreaSerializer(serializers.ModelSerializer):
@@ -96,61 +88,3 @@ class ProjectSerializer(serializers.ModelSerializer):
             instance.projectarea_set.exclude(area_id__in=new_areas).delete()
 
         return instance
-
-
-class InstallmentSerializer(serializers.ModelSerializer):
-    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
-    area_values = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Installment
-        fields = "__all__"
-
-    def get_area_values(self, obj):
-        ...
-        project_areas = obj.project.projectarea_set.all()
-        area_values = {}
-        for project_area in project_areas:
-            amount_decimal = Decimal(str(obj.amount))
-            area_values[project_area.area.name] = amount_decimal * (
-                project_area.percentage / Decimal("100")
-            )
-        return area_values
-
-
-class ProjectSummarySerializer(serializers.Serializer):
-    name = serializers.CharField()
-    expected = serializers.FloatField()
-    executed = serializers.FloatField()
-    pending = serializers.FloatField()
-    overdue = serializers.FloatField()
-    coordinator = serializers.CharField()
-    start_date = serializers.CharField()
-    areas = serializers.ListField(child=serializers.CharField(), allow_empty=True)
-    total_installments = serializers.IntegerField()
-
-
-class OverviewSerializer(serializers.Serializer):
-    total_expected = serializers.FloatField()
-    total_executed = serializers.FloatField()
-    total_pending = serializers.FloatField()
-    total_overdue = serializers.FloatField()
-    areas_summary = serializers.ListField(
-        child=serializers.DictField(child=serializers.CharField(), allow_empty=True)
-    )
-    institution_summary = serializers.DictField(
-        child=serializers.FloatField(), allow_empty=True
-    )
-    year_summary = serializers.DictField(
-        child=serializers.FloatField(), allow_empty=True
-    )
-    destination_summary = serializers.DictField(
-        child=serializers.FloatField(), allow_empty=True
-    )
-    projects_summary = ProjectSummarySerializer(many=True)
-    monthly_summary = serializers.DictField(
-        child=serializers.FloatField(), allow_empty=True
-    )
-    monthly_area_summary = serializers.DictField(
-        child=serializers.DictField(child=serializers.FloatField(), allow_empty=True)
-    )

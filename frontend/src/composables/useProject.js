@@ -21,12 +21,30 @@ export function useProject() {
         }
     };
 
+    const availableYears = ref([]);
+    const totalProjects = ref(0);
+
+    const fetchAvailableYears = async () => {
+        // Don't set global loading since this is often a background/filter operation
+        try {
+            const response = await projectService.getAvailableYears();
+            availableYears.value = response.data.years;
+            totalProjects.value = response.data.count;
+        } catch (err) {
+            console.error('Erro ao carregar anos disponíveis:', err);
+            // Fallback to current year if fails
+            availableYears.value = [new Date().getFullYear()];
+        }
+    };
+
     const deleteProject = async (id) => {
         loading.value = true;
 
         try {
             await projectService.deleteProject(id);
-            project.value = project.value.filter(project => project.id !== id);
+            if (Array.isArray(project.value)) {
+                project.value = project.value.filter(project => project.id !== id);
+            }
         } catch (err) {
             error.value = 'Erro ao deletar projeto';
             console.error(err);
@@ -40,6 +58,9 @@ export function useProject() {
         loading,
         error,
         fetchProject,
-        deleteProject
+        deleteProject,
+        availableYears,
+        totalProjects,
+        fetchAvailableYears
     };
 }

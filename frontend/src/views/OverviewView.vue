@@ -190,13 +190,13 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useProject } from "@/composables/useProject";
 import { useInstallments } from "@/composables/useInstallments";
-import BarChart from "@/components/shared/charts/BarChart.vue";
-import LineChart from "@/components/shared/charts/LineChart.vue";
-import DoughnutChart from "@/components/shared/charts/DoughnutChart.vue";
-import StatusDistributionChart from "@/components/shared/charts/StatusDistributionChart.vue";
-import GroupedBarChart from "@/components/shared/charts/GroupedBarChart.vue";
+import BarChart from "@/components/domain/dashboard/charts/BarChart.vue";
+import LineChart from "@/components/domain/dashboard/charts/LineChart.vue";
+import DoughnutChart from "@/components/domain/dashboard/charts/DoughnutChart.vue";
+import StatusDistributionChart from "@/components/domain/dashboard/charts/StatusDistributionChart.vue";
+import GroupedBarChart from "@/components/domain/dashboard/charts/GroupedBarChart.vue";
 import { useOverview } from '@/composables/useOverview';
-import { formatCurrency } from "@/utils/currencyUtils";
+import { formatCurrency as formatCurrencyUtil } from "@/utils/currencyUtils";
 
 export default {
   name: "OverviewView",
@@ -208,15 +208,15 @@ export default {
     GroupedBarChart,
   },
   setup() {
-    const { project, fetchProject } = useProject();
+    const { availableYears, fetchAvailableYears } = useProject();
     const { installments, fetchInstallments } = useInstallments();
     const { overview, loading, error, fetchOverview } = useOverview();
-    const allInstallments = ref([]);
+
     const selectedGraph = ref('status');
     const windowWidth = ref(window.innerWidth);
     const chartHeight = ref(getChartHeight());
     const selectedYear = ref(new Date().getFullYear());
-    const availableYears = ref([]);
+
     // const activeTab = ref('institution');
 
     const headersAreasSummary = [
@@ -246,30 +246,7 @@ export default {
       return areas.join(', ');
     };
 
-    const updateAvailableYears = () => {
-      if (!project.value || project.value.length === 0) {
-        availableYears.value = [new Date().getFullYear()];
-        return;
-      }
 
-
-
-      const years = new Set();
-      project.value.forEach(proj => {
-        const startYear = new Date(proj.start_date).getFullYear();
-        const endYear = new Date(proj.end_date).getFullYear();
-
-        for (let year = startYear; year <= endYear; year++) {
-          years.add(year);
-        }
-      });
-
-      availableYears.value = Array.from(years).sort((a, b) => b - a);
-
-      if (!availableYears.value.includes(selectedYear.value)) {
-        selectedYear.value = availableYears.value[0];
-      }
-    };
 
     const handleYearChange = async () => {
       await fetchOverview(selectedYear.value);
@@ -307,9 +284,7 @@ export default {
       return overview.value?.total_overdue || 0;
     });
 
-    const projectCount = computed(() => {
-      return project.value ? project.value.length : 0;
-    });
+
 
     const completedAreasSummary = computed(() => {
       return overview.value?.areas_summary.map(area => ({
@@ -325,35 +300,9 @@ export default {
       })).filter(area => area.value > 0);
     });
 
-    const overdueAreasSummary = computed(() => {
-      const summary = {};
 
-      if (!allInstallments.value) return [];
 
-      allInstallments.value.forEach((installment) => {
-        if (!installment.area_values || installment.status !== 'Atrasada') return;
-
-        Object.entries(installment.area_values).forEach(([area, value]) => {
-          if (!summary[area]) {
-            summary[area] = 0;
-          }
-          summary[area] += value;
-        });
-      });
-
-      return Object.entries(summary).map(([name, value]) => ({
-        name,
-        value
-      })).filter(area => area.value > 0);
-    });
-
-    const formatCurrency = (value) => {
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-        maximumFractionDigits: windowWidth.value < 600 ? 0 : 2,
-      }).format(value);
-    };
+    const formatCurrency = (value) => formatCurrencyUtil(value);
 
     const getProgressColor = (percentage) => {
       if (percentage < 30) return "error";
@@ -456,35 +405,14 @@ export default {
     });
 
     onMounted(async () => {
-      await fetchProject();
-      updateAvailableYears();
+      await fetchAvailableYears();
+      if (availableYears.value.length > 0 && !availableYears.value.includes(selectedYear.value)) {
+        selectedYear.value = availableYears.value[0];
+      }
       await fetchOverview(selectedYear.value);
     });
 
-    watch(() => project.value, () => {
-      updateAvailableYears();
-    }, { deep: true });
 
-    const loadInstallments = async () => {
-      const allInstallmentsData = [];
-
-      if (project.value && project.value.length > 0) {
-        for (const proj of project.value) {
-          await fetchInstallments(proj.id);
-          if (installments.value && installments.value.length > 0) {
-            allInstallmentsData.push(...installments.value);
-          }
-        }
-      }
-
-      allInstallmentsData.sort((a, b) => {
-        const dateA = new Date(a.effective_date || a.estimated_date);
-        const dateB = new Date(b.effective_date || b.estimated_date);
-        return dateA - dateB;
-      });
-
-      allInstallments.value = allInstallmentsData;
-    };
 
     const areasSummary = computed(() => {
       return overview.value?.areas_summary || [];
@@ -521,7 +449,6 @@ export default {
     });
 
     return {
-      allInstallments,
       areasSummary,
       headersAreasSummary,
       headersProjectsSummary,
@@ -530,12 +457,12 @@ export default {
       getProgressColor,
       completedAreasSummary,
       pendingAreasSummary,
-      overdueAreasSummary,
+
       totalBudget,
       totalExecuted,
       totalPending,
       totalOverdue,
-      projectCount,
+
       selectedGraph,
       graphs,
       getSelectedGraphComponent,
