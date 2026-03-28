@@ -1,6 +1,6 @@
 # Visão Geral do Projeto
 
-Bem-vindo à documentação do projeto de **Execução Orçamentária**.
+Bem-vindo à documentação do projeto de **PlacoonCI**.
 
 Este sistema foi desenvolvido para facilitar o gerenciamento, monitoramento e previsão de ressarcimento de custos indiretos em projetos. Ele permite o acompanhamento detalhado de parcelas (installments), áreas de atuação e o status financeiro global de cada iniciativa.
 
