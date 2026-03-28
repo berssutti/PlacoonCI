@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from django.db.models import Q, Exists, OuterRef, Case, When, Value, BooleanField
+from django.db.models import Q, Exists, OuterRef, Case, When, Value, BooleanField, QuerySet
 from django.utils import timezone
 from datetime import datetime, timedelta
 
@@ -20,49 +20,50 @@ class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("start_date")
     serializer_class = ProjectSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
+        """Override get_queryset to apply alerts annotation and active year filtering."""
+        queryset = super().get_queryset().prefetch_related("projectarea_set__area")
+        queryset = self._annotate_project_alerts(queryset)
+
+        active_year = self.request.query_params.get("active_year")
+        if active_year:
+            queryset = self._filter_projects_by_active_year(queryset, active_year)
+
+        return queryset
+
+    def _annotate_project_alerts(self, queryset: QuerySet) -> QuerySet:
+        """Annotate projects with a boolean flag indicating if they have any active alerts."""
         today = timezone.now().date()
         one_week_from_now = today + timedelta(days=7)
 
-        # Subquery to check for overdue installments
         overdue_installments = Installment.objects.filter(
             project=OuterRef("pk"), status="Atrasada"
         )
 
-        queryset = (
-            super()
-            .get_queryset()
-            .prefetch_related("projectarea_set__area")
-            .annotate(
-                has_alerts=Case(
-                    When(
-                        Q(end_date__lte=one_week_from_now)
-                        | Exists(overdue_installments),
-                        then=Value(True),
-                    ),
-                    default=Value(False),
-                    output_field=BooleanField(),
-                )
+        return queryset.annotate(
+            has_alerts=Case(
+                When(
+                    Q(end_date__lte=one_week_from_now) | Exists(overdue_installments),
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
             )
         )
-        year = self.request.query_params.get("active_year", None)
 
-        if year:
-            try:
-                year = int(year)
-                start_of_year = datetime(year, 1, 1)
-                end_of_year = datetime(year, 12, 31)
+    def _filter_projects_by_active_year(self, queryset: QuerySet, year_str: str) -> QuerySet:
+        """Filter projects based on their activity within the specified year."""
+        try:
+            year = int(year_str)
+            start_of_year = datetime(year, 1, 1)
+            end_of_year = datetime(year, 12, 31)
 
-                queryset = queryset.filter(
-                    Q(start_date__lte=end_of_year)  # Started before or during the year
-                    & (
-                        Q(end_date__gte=start_of_year) | Q(end_date__isnull=True)
-                    )  # Ended after or during the year
-                )
-            except ValueError:
-                pass
-
-        return queryset
+            return queryset.filter(
+                Q(start_date__lte=end_of_year)
+                & (Q(end_date__gte=start_of_year) | Q(end_date__isnull=True))
+            )
+        except ValueError:
+            return queryset
 
     @action(detail=False, methods=["get"], url_path="available-years")
     def available_years(self, request):
@@ -77,15 +78,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def overview(self, request):
-        year = request.query_params.get("year", None)
-        if not year:
+        year_str = request.query_params.get("year")
+        if not year_str:
             return Response(
                 {"error": "Year parameter is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
-            year = int(year)
+            year = int(year_str)
         except ValueError:
             return Response(
                 {"error": "Invalid year format"}, status=status.HTTP_400_BAD_REQUEST
@@ -107,7 +108,8 @@ class AreaViewSet(viewsets.ModelViewSet):
 class InstallmentViewSet(viewsets.ModelViewSet):
     serializer_class = InstallmentSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
+        """Override get_queryset to filter installments by project and optionally by year."""
         project_id = self.kwargs.get("project_pk")
         queryset = (
             Installment.objects.filter(project_id=project_id)
@@ -115,16 +117,20 @@ class InstallmentViewSet(viewsets.ModelViewSet):
             .prefetch_related("project__projectarea_set__area")
         )
 
-        year = self.request.query_params.get("year", None)
-        if year:
-            try:
-                year = int(year)
-                start_of_year = datetime(year, 1, 1)
-                end_of_year = datetime(year, 12, 31)
-                queryset = queryset.filter(
-                    estimated_date__gte=start_of_year, estimated_date__lte=end_of_year
-                )
-            except ValueError:
-                pass
+        year_str = self.request.query_params.get("year")
+        if year_str:
+            queryset = self._filter_installments_by_year(queryset, year_str)
 
         return queryset.order_by("estimated_date")
+
+    def _filter_installments_by_year(self, queryset: QuerySet, year_str: str) -> QuerySet:
+        """Filter installments based on their estimated date within the specified year."""
+        try:
+            year = int(year_str)
+            start_of_year = datetime(year, 1, 1)
+            end_of_year = datetime(year, 12, 31)
+            return queryset.filter(
+                estimated_date__gte=start_of_year, estimated_date__lte=end_of_year
+            )
+        except ValueError:
+            return queryset
