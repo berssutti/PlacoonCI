@@ -46,14 +46,15 @@
       <v-card-text v-else class="text-center py-6">
         <v-icon size="48" color="grey-lighten-1">mdi-bell-off-outline</v-icon>
         <div class="text-body-1 grey--text mt-2">Nenhum alerta no momento.</div>
-        <v-btn v-if="dismissedAlerts.size > 0" variant="text" size="x-small" @click="resetDismissed" class="mt-2">
-          Restaurar alertas removidos
-        </v-btn>
       </v-card-text>
 
-      <v-divider v-if="visibleAlerts.length > 0"></v-divider>
-      <v-card-actions v-if="visibleAlerts.length > 0" class="pa-2">
-        <v-btn block variant="text" size="small" @click="menu = false">Fechar</v-btn>
+      <v-divider v-if="visibleAlerts.length > 0 || dismissedAlerts.size > 0"></v-divider>
+      <v-card-actions v-if="visibleAlerts.length > 0 || dismissedAlerts.size > 0" class="pa-2 d-flex flex-column">
+        <v-btn v-if="dismissedAlerts.size > 0" block variant="text" size="x-small" color="primary" @click="resetDismissed"
+          class="mb-1">
+          Restaurar alertas removidos
+        </v-btn>
+        <v-btn block variant="tonal" size="small" @click="menu = false">Fechar</v-btn>
       </v-card-actions>
     </v-card>
   </v-menu>
