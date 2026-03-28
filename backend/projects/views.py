@@ -1,7 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from django.db.models import Q
-from datetime import datetime
+from django.db.models import Q, Exists, OuterRef, Case, When, Value, BooleanField
+from django.utils import timezone
+from datetime import datetime, timedelta
 
 from rest_framework.decorators import action
 from .models import Project, Area, Installment
@@ -20,7 +21,30 @@ class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset().prefetch_related("projectarea_set__area")
+        today = timezone.now().date()
+        one_week_from_now = today + timedelta(days=7)
+
+        # Subquery to check for overdue installments
+        overdue_installments = Installment.objects.filter(
+            project=OuterRef("pk"), status="Atrasada"
+        )
+
+        queryset = (
+            super()
+            .get_queryset()
+            .prefetch_related("projectarea_set__area")
+            .annotate(
+                has_alerts=Case(
+                    When(
+                        Q(end_date__lte=one_week_from_now)
+                        | Exists(overdue_installments),
+                        then=Value(True),
+                    ),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                )
+            )
+        )
         year = self.request.query_params.get("active_year", None)
 
         if year:
@@ -45,6 +69,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         data = project_service.get_available_years(queryset)
         return Response(data)
+
+    @action(detail=False, methods=["get"])
+    def alerts(self, request):
+        alerts = project_service.get_active_alerts()
+        return Response(alerts)
 
     @action(detail=False, methods=["get"])
     def overview(self, request):

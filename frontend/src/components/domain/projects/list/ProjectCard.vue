@@ -1,8 +1,14 @@
 <template>
   <v-card elevation="2" class="rounded-lg h-100 project-card" @click="$emit('click')">
-    <v-card-title class="text-h6">
+    <v-card-title class="text-h6 d-flex align-center">
       <v-icon class="mr-2">mdi-file-document-outline</v-icon>
-      {{ project.name }}
+      <span class="text-truncate">{{ project.name }}</span>
+      <v-spacer></v-spacer>
+      <v-tooltip v-if="project.has_alerts" text="Este projeto possui alertas">
+        <template v-slot:activator="{ props }">
+          <v-icon v-bind="props" color="error" class="ml-2">mdi-alert-circle</v-icon>
+        </template>
+      </v-tooltip>
     </v-card-title>
     <v-card-subtitle>
       Processo SEI: {{ project.processo_sei }}

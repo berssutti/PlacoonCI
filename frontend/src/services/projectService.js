@@ -27,5 +27,9 @@ export const projectService = {
 
     deleteProject(id) {
         return api.delete(`/projects/${id}/`);
+    },
+
+    getAlerts() {
+        return api.get('/projects/alerts/');
     }
 };

@@ -5,6 +5,8 @@
       <v-spacer></v-spacer>
       <v-btn to="/" text>Visão Geral</v-btn>
       <v-btn to="/projects" text>Lista de Projetos</v-btn>
+      <v-divider vertical class="mx-3"></v-divider>
+      <NotificationBell />
     </v-app-bar>
 
     <v-main>
@@ -17,8 +19,13 @@
 </template>
 
 <script>
+import NotificationBell from '@/components/ui/NotificationBell.vue';
+
 export default {
   name: 'App',
+  components: {
+    NotificationBell,
+  },
 };
 </script>
 
