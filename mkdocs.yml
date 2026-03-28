@@ -17,6 +17,7 @@ plugins:
 
 nav:
   - "Visão Geral": "index.md"
+  - "Instalação e Execução": "setup.md"
   - "Backend":
       - "Visão Geral": "backend/index.md"
       - "Models": "backend/models.md"
