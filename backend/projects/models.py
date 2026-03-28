@@ -59,24 +59,15 @@ class Project(models.Model):
 
     def calculate_compensation_totals(self):
         """Calculate and update the compensation totals based on installment statuses."""
-        executed = (
-            self.installments.filter(status="Quitada").aggregate(
-                total=models.Sum("amount")
-            )["total"]
-            or 0
+        totals = self.installments.aggregate(
+            executed=models.Sum("amount", filter=models.Q(status="Quitada")),
+            pending=models.Sum("amount", filter=models.Q(status="Pendente")),
+            overdue=models.Sum("amount", filter=models.Q(status="Atrasada")),
         )
-        pending = (
-            self.installments.filter(status="Pendente").aggregate(
-                total=models.Sum("amount")
-            )["total"]
-            or 0
-        )
-        overdue = (
-            self.installments.filter(status="Atrasada").aggregate(
-                total=models.Sum("amount")
-            )["total"]
-            or 0
-        )
+
+        executed = totals["executed"] or 0
+        pending = totals["pending"] or 0
+        overdue = totals["overdue"] or 0
         expected = executed + pending + overdue
 
         self.total_compensation_executed = executed
