@@ -42,8 +42,10 @@ def get_active_alerts():
             message = f"Projeto '{project.name}' vence em breve ({project.end_date.strftime('%d/%m/%Y')})."
             alert_type = "deadline_near"
 
+        alert_id = f"{project.id}_{alert_type}_{project.end_date}"
         alerts.append(
             {
+                "id": alert_id,
                 "project_id": project.id,
                 "project_name": project.name,
                 "type": alert_type,
@@ -57,10 +59,13 @@ def get_active_alerts():
         "project"
     )
     for installment in overdue_installments:
+        alert_id = f"inst_{installment.id}_overdue"
         alerts.append(
             {
+                "id": alert_id,
                 "project_id": installment.project.id,
                 "project_name": installment.project.name,
+                "installment_id": installment.id,
                 "type": "installment_overdue",
                 "message": f"Parcela de {installment.amount} do projeto '{installment.project.name}' está atrasada.",
                 "date": installment.estimated_date,
@@ -68,6 +73,6 @@ def get_active_alerts():
         )
 
     # Sort alerts by date (most recent/urgent first)
-    alerts.sort(key=lambda x: x["date"])
+    alerts.sort(key=lambda x: x["date"], reverse=True)
 
     return alerts

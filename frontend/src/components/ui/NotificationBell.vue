@@ -1,8 +1,8 @@
 <template>
-  <v-menu v-model="menu" :close-on-content-click="false" offset-y nudge-bottom="10" min-width="350" max-width="400">
+  <v-menu v-model="menu" :close-on-content-click="false" offset-y nudge-bottom="10" min-width="350" max-width="450">
     <template v-slot:activator="{ props }">
       <v-btn icon v-bind="props" class="mr-2">
-        <v-badge :content="alerts.length" :model-value="alerts.length > 0" color="error" overlap>
+        <v-badge :content="visibleAlerts.length" :model-value="visibleAlerts.length > 0" color="error" overlap>
           <v-icon>mdi-bell</v-icon>
         </v-badge>
       </v-btn>
@@ -13,34 +13,46 @@
         <v-icon class="mr-2">mdi-bell-outline</v-icon>
         Alertas
         <v-spacer></v-spacer>
-        <v-chip v-if="alerts.length > 0" size="x-small" color="error" variant="flat">
-          {{ alerts.length }} pendente(s)
+        <v-chip v-if="visibleAlerts.length > 0" size="x-small" color="error" variant="flat">
+          {{ visibleAlerts.length }} pendente(s)
         </v-chip>
       </v-card-title>
       <v-divider></v-divider>
 
-      <v-list v-if="alerts.length > 0" class="py-0" max-height="400" style="overflow-y: auto">
-        <template v-for="(alert, index) in alerts" :key="index">
-          <v-list-item :prepend-icon="getAlertIcon(alert.type)" :title="alert.project_name" :subtitle="alert.message"
-            @click="goToProject(alert.project_id)" class="py-3">
-            <template v-slot:prepend>
-              <v-icon :color="getAlertColor(alert.type)" class="mr-2">{{ getAlertIcon(alert.type) }}</v-icon>
+      <v-list v-if="visibleAlerts.length > 0" class="py-0" max-height="400" style="overflow-y: auto">
+        <template v-for="(alert, index) in visibleAlerts" :key="alert.id">
+          <v-tooltip location="bottom" open-delay="500">
+            <template v-slot:activator="{ props }">
+              <v-list-item v-bind="props" :prepend-icon="getAlertIcon(alert.type)" :title="alert.project_name"
+                :subtitle="alert.message" @click="goToProject(alert)" class="py-3 pr-2">
+                <template v-slot:prepend>
+                  <v-icon :color="getAlertColor(alert.type)" class="mr-2">{{ getAlertIcon(alert.type) }}</v-icon>
+                </template>
+                <template v-slot:append>
+                  <div class="d-flex align-center">
+                    <v-btn icon="mdi-close" size="x-small" variant="text" color="grey" @click.stop="dismissAlert(alert.id)"
+                      class="ml-2"></v-btn>
+                    <v-icon size="small" color="grey" class="ml-1">mdi-chevron-right</v-icon>
+                  </div>
+                </template>
+              </v-list-item>
             </template>
-            <template v-slot:append>
-              <v-icon size="small" color="grey">mdi-chevron-right</v-icon>
-            </template>
-          </v-list-item>
-          <v-divider v-if="index < alerts.length - 1"></v-divider>
+            <span>{{ alert.message }}</span>
+          </v-tooltip>
+          <v-divider v-if="index < visibleAlerts.length - 1"></v-divider>
         </template>
       </v-list>
 
       <v-card-text v-else class="text-center py-6">
         <v-icon size="48" color="grey-lighten-1">mdi-bell-off-outline</v-icon>
         <div class="text-body-1 grey--text mt-2">Nenhum alerta no momento.</div>
+        <v-btn v-if="dismissedAlerts.size > 0" variant="text" size="x-small" @click="resetDismissed" class="mt-2">
+          Restaurar alertas removidos
+        </v-btn>
       </v-card-text>
 
-      <v-divider v-if="alerts.length > 0"></v-divider>
-      <v-card-actions v-if="alerts.length > 0" class="pa-2">
+      <v-divider v-if="visibleAlerts.length > 0"></v-divider>
+      <v-card-actions v-if="visibleAlerts.length > 0" class="pa-2">
         <v-btn block variant="text" size="small" @click="menu = false">Fechar</v-btn>
       </v-card-actions>
     </v-card>
@@ -48,13 +60,45 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { projectService } from '@/services/projectService';
 
 const router = useRouter();
 const menu = ref(false);
 const alerts = ref([]);
+const dismissedAlerts = ref(new Set());
+
+const STORAGE_KEY = 'dismissed_alerts';
+
+const loadDismissed = () => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      dismissedAlerts.value = new Set(JSON.parse(saved));
+    } catch (e) {
+      console.error('Error loading dismissed alerts', e);
+    }
+  }
+};
+
+const saveDismissed = () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(dismissedAlerts.value)));
+};
+
+const dismissAlert = (alertId) => {
+  dismissedAlerts.value.add(alertId);
+  saveDismissed();
+};
+
+const resetDismissed = () => {
+  dismissedAlerts.value.clear();
+  saveDismissed();
+};
+
+const visibleAlerts = computed(() => {
+  return alerts.value.filter(a => !dismissedAlerts.value.has(a.id));
+});
 
 const fetchAlerts = async () => {
   try {
@@ -91,16 +135,24 @@ const getAlertColor = (type) => {
   }
 };
 
-const goToProject = (projectId) => {
+const goToProject = (alert) => {
   menu.value = false;
-  router.push({ name: 'ProjectDetails', params: { id: projectId } });
+  const query = {};
+  if (alert.installment_id) {
+    query.highlight_installment = alert.installment_id;
+  }
+  router.push({
+    name: 'ProjectDetails',
+    params: { id: alert.project_id },
+    query
+  });
 };
 
 let pollingInterval = null;
 
 onMounted(() => {
+  loadDismissed();
   fetchAlerts();
-  // Optional: poll for alerts every 5 minutes
   pollingInterval = setInterval(fetchAlerts, 5 * 60 * 1000);
 });
 
