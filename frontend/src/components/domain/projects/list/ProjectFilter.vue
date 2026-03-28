@@ -1,12 +1,25 @@
 <template>
-  <v-row class="mb-4">
-    <v-col cols="12" md="6">
-      <v-text-field v-model="searchQuery" label="Buscar projeto por palavra-chave" placeholder="Digite para buscar..."
-        clearable dense @update:model-value="emitFilters"></v-text-field>
+  <v-row no-gutters class="align-center">
+    <v-col cols="12" md="8" class="pr-md-4">
+      <v-text-field
+        v-model="searchQuery"
+        label="Buscar projetos"
+        placeholder="Nome do projeto, coordenador ou SEI..."
+        prepend-inner-icon="mdi-magnify"
+        hide-details
+        clearable
+        @update:model-value="emitFilters"
+      ></v-text-field>
     </v-col>
-    <v-col cols="12" md="6">
-      <v-select v-model="selectedYear" :items="years" label="Filtrar por ano" placeholder="Selecione o ano" dense
-        @update:model-value="emitFilters"></v-select>
+    <v-col cols="12" md="4" class="mt-4 mt-md-0">
+      <v-select
+        v-model="selectedYear"
+        :items="years"
+        label="Ano"
+        prepend-inner-icon="mdi-calendar"
+        hide-details
+        @update:model-value="emitFilters"
+      ></v-select>
     </v-col>
   </v-row>
 </template>

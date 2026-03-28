@@ -1,19 +1,21 @@
 <template>
   <v-container fluid>
-    <v-row>
-      <v-col cols="12">
-        <v-card elevation="2" class="rounded-lg">
-          <v-card-title class="d-flex flex-wrap align-center py-4 px-6">
-            <div class="d-flex align-center">
-              <v-icon size="large" class="mr-2">mdi-chart-donut</v-icon>
-              <span class="text-h4 text-sm-h4 text-md-h4 primary--text">Visão Geral dos Ressarcimentos</span>
-            </div>
-            <v-spacer></v-spacer>
-            <v-select v-model="selectedYear" :items="availableYears" label="Ano" class="mt-2 mt-sm-0 align-self-center"
-              style="max-width: 150px;" density="compact" variant="outlined"
-              @update:model-value="handleYearChange"></v-select>
-          </v-card-title>
-        </v-card>
+    <v-row class="mb-6">
+      <v-col cols="12" class="d-flex align-center justify-space-between">
+        <div>
+          <h1 class="text-h4 font-weight-bold mb-1">Dashboard</h1>
+          <p class="text-subtitle-1 text-grey">Visão geral do desempenho orçamentário</p>
+        </div>
+        <div style="width: 200px;">
+          <v-select
+            v-model="selectedYear"
+            :items="availableYears"
+            label="Ano de Referência"
+            hide-details
+            variant="outlined"
+            @update:model-value="handleYearChange"
+          ></v-select>
+        </div>
       </v-col>
     </v-row>
 
@@ -31,37 +33,57 @@
     </v-row>
 
     <template v-else>
-      <v-row class="mt-4">
+      <v-row class="mb-8">
         <v-col cols="12" sm="6" md="3">
-          <v-card elevation="2" class="rounded-lg h-100" color="primary" dark>
-            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Total Esperado</div>
-              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalBudget) }}</div>
-            </v-card-text>
+          <v-card class="pa-4">
+            <div class="d-flex align-center">
+              <div class="rounded-lg pa-3 bg-indigo-lighten-5 mr-4">
+                <v-icon color="primary" size="24">mdi-currency-usd</v-icon>
+              </div>
+              <div>
+                <div class="text-caption text-grey font-weight-bold">EXPECTED TOTAL</div>
+                <div class="text-h6 font-weight-bold">{{ formatCurrency(totalBudget) }}</div>
+              </div>
+            </div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
-          <v-card elevation="2" class="rounded-lg h-100" color="success" dark>
-            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Executado</div>
-              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalExecuted) }}</div>
-            </v-card-text>
+          <v-card class="pa-4">
+            <div class="d-flex align-center">
+              <div class="rounded-lg pa-3 bg-green-lighten-5 mr-4">
+                <v-icon color="success" size="24">mdi-check-circle-outline</v-icon>
+              </div>
+              <div>
+                <div class="text-caption text-grey font-weight-bold">EXECUTED</div>
+                <div class="text-h6 font-weight-bold">{{ formatCurrency(totalExecuted) }}</div>
+              </div>
+            </div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
-          <v-card elevation="2" class="rounded-lg h-100" color="warning" dark>
-            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Pendente</div>
-              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalPending) }}</div>
-            </v-card-text>
+          <v-card class="pa-4">
+            <div class="d-flex align-center">
+              <div class="rounded-lg pa-3 bg-amber-lighten-5 mr-4">
+                <v-icon color="warning" size="24">mdi-clock-outline</v-icon>
+              </div>
+              <div>
+                <div class="text-caption text-grey font-weight-bold">PENDING</div>
+                <div class="text-h6 font-weight-bold">{{ formatCurrency(totalPending) }}</div>
+              </div>
+            </div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
-          <v-card elevation="2" class="rounded-lg h-100" color="error" dark>
-            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Atrasado</div>
-              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalOverdue) }}</div>
-            </v-card-text>
+          <v-card class="pa-4">
+            <div class="d-flex align-center">
+              <div class="rounded-lg pa-3 bg-red-lighten-5 mr-4">
+                <v-icon color="error" size="24">mdi-alert-circle-outline</v-icon>
+              </div>
+              <div>
+                <div class="text-caption text-grey font-weight-bold">OVERDUE</div>
+                <div class="text-h6 font-weight-bold">{{ formatCurrency(totalOverdue) }}</div>
+              </div>
+            </div>
           </v-card>
         </v-col>
       </v-row>

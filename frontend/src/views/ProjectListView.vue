@@ -1,25 +1,27 @@
 <template>
-  <v-container>
-    <v-row>
-      <v-col cols="12">
-        <v-card elevation="2" class="rounded-lg">
-          <v-card-title class="text-h4 primary--text py-4 px-6">
-            <v-icon large class="mr-2">mdi-folder-multiple</v-icon>
-            Lista de Projetos
-          </v-card-title>
-        </v-card>
+  <v-container fluid>
+    <v-row class="mb-6">
+      <v-col cols="12" class="d-flex align-center justify-space-between">
+        <div>
+          <h1 class="text-h4 font-weight-bold mb-1">Projetos</h1>
+          <p class="text-subtitle-1 text-grey">Gerencie e acompanhe todos os projetos</p>
+        </div>
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-plus"
+          size="large"
+          @click="goToCreateProject"
+        >
+          Novo Projeto
+        </v-btn>
       </v-col>
     </v-row>
 
-    <v-row class="mt-4">
-      <v-col cols="12" md="8">
-        <ProjectFilter :years="years" :initial-filters="initialFilters" @update:filters="updateFilters" />
-      </v-col>
-      <v-col cols="12" md="4" class="text-right">
-        <v-btn color="primary" size="x-large" elevation="2" class="rounded-lg" @click="goToCreateProject">
-          <v-icon left>mdi-plus</v-icon>
-          Cadastrar Novo Projeto
-        </v-btn>
+    <v-row class="mb-6">
+      <v-col cols="12">
+        <v-card class="pa-4">
+          <ProjectFilter :years="years" :initial-filters="initialFilters" @update:filters="updateFilters" />
+        </v-card>
       </v-col>
     </v-row>
 
