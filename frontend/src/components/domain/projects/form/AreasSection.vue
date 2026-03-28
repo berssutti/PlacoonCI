@@ -11,7 +11,7 @@
           :rules="[rules.required, rules.percentage]" required></v-text-field>
       </v-col>
       <v-col cols="2" class="text-center">
-        <v-btn icon color="red" @click="$emit('remove-area', index)">
+        <v-btn icon aria-label="Remover Área" color="red" @click="$emit('remove-area', index)">
           <v-icon>mdi-delete</v-icon>
         </v-btn>
       </v-col>

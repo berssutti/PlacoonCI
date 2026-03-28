@@ -3,7 +3,7 @@
     <v-card class="rounded-lg">
       <v-card-title class="d-flex justify-space-between align-center pa-4">
         <h2 class="text-h5 text-md-h4">Visualização de Parcelas por Área</h2>
-        <v-btn icon @click="emitClose" class="ml-2">
+        <v-btn icon aria-label="Fechar" @click="emitClose" class="ml-2">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
