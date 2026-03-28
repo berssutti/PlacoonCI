@@ -1,32 +1,63 @@
 <template>
-  <v-container>
-    <v-card elevation="2" class="pa-4">
-      <v-card-title class="text-h5 font-weight-bold">
-        {{ isEditing ? 'Editar Projeto' : 'Novo Projeto' }}
-      </v-card-title>
-      <v-divider></v-divider>
+  <v-container fluid>
+    <v-row class="mb-12">
+      <v-col cols="12" class="d-flex align-end">
+        <v-btn icon="mdi-arrow-left" variant="text" @click="$router.back()" class="mr-6 bg-surface-container-low rounded-xl" size="large"></v-btn>
+        <div>
+          <h1 class="text-h2 font-weight-black mb-2 tracking-tight">{{ isEditing ? 'Editar Projeto' : 'Novo Projeto' }}</h1>
+          <p class="text-subtitle-1 text-slate-500 font-medium">Formulário de curadoria de projetos PlacoonCI</p>
+        </div>
+      </v-col>
+    </v-row>
 
-      <v-card-text>
+    <v-row justify="center">
+      <v-col cols="12" lg="10">
         <v-form @submit.prevent="saveProject">
-          <GeneralInfo v-model:project="project" :rules="rules" />
+          <v-card class="mb-10 bg-surface-container-lowest elevation-0 no-line-card">
+            <v-card-title class="pa-8 font-weight-bold text-h5 text-primary">Informações Gerais</v-card-title>
+            <v-card-text class="pa-8 pt-0">
+              <GeneralInfo v-model:project="project" :rules="rules" />
+            </v-card-text>
+          </v-card>
 
-          <BudgetInfo v-if="project.status === 'Recebido'" v-model:project="project" :rules="rules" />
+          <v-card v-if="project.status === 'Recebido'" class="mb-6">
+            <v-card-title class="pa-6 border-b font-weight-bold">Informações de Orçamento</v-card-title>
+            <v-card-text class="pa-6">
+              <BudgetInfo v-model:project="project" :rules="rules" />
+            </v-card-text>
+          </v-card>
 
-          <ManagementInfo v-model:project="project" :rules="rules" />
+          <v-card class="mb-6">
+            <v-card-title class="pa-6 border-b font-weight-bold">Informações de Gestão</v-card-title>
+            <v-card-text class="pa-6">
+              <ManagementInfo v-model:project="project" :rules="rules" />
+            </v-card-text>
+          </v-card>
 
-          <ProjectBudget v-model:project="project" :rules="rules" />
+          <v-card class="mb-6">
+            <v-card-title class="pa-6 border-b font-weight-bold">Ressarcimento de Custos Indiretos</v-card-title>
+            <v-card-text class="pa-6">
+              <ProjectBudget v-model:project="project" :rules="rules" />
+            </v-card-text>
+          </v-card>
 
-          <AreasSection v-model:areas="project.areas" :areaList="areaList" :rules="rules" @add-area="addArea"
-            @remove-area="removeArea" />
+          <v-card class="mb-6">
+            <v-card-title class="pa-6 border-b font-weight-bold">Áreas de Atuação</v-card-title>
+            <v-card-text class="pa-6">
+              <AreasSection v-model:areas="project.areas" :areaList="areaList" :rules="rules" @add-area="addArea"
+                @remove-area="removeArea" />
+            </v-card-text>
+          </v-card>
 
-          <v-divider class="my-4"></v-divider>
-
-          <FormActions @cancel="$router.back()" @save="saveProject" />
+          <div class="d-flex justify-end gap-2 py-4">
+            <v-btn variant="outlined" color="grey-darken-1" @click="$router.back()" class="mr-2">Cancelar</v-btn>
+            <v-btn color="primary" type="submit" size="large">Salvar Projeto</v-btn>
+          </div>
         </v-form>
-      </v-card-text>
-      <FeedbackSnackbar v-model="snackbar.show" :message="snackbar.text" :color="snackbar.color" />
+      </v-col>
+    </v-row>
 
-    </v-card>
+    <FeedbackSnackbar v-model="snackbar.show" :message="snackbar.text" :color="snackbar.color" />
   </v-container>
 </template>
 <script setup>

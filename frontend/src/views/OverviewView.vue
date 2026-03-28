@@ -1,19 +1,22 @@
 <template>
   <v-container fluid>
-    <v-row>
-      <v-col cols="12">
-        <v-card elevation="2" class="rounded-lg">
-          <v-card-title class="d-flex flex-wrap align-center py-4 px-6">
-            <div class="d-flex align-center">
-              <v-icon size="large" class="mr-2">mdi-chart-donut</v-icon>
-              <span class="text-h4 text-sm-h4 text-md-h4 primary--text">Visão Geral dos Ressarcimentos</span>
-            </div>
-            <v-spacer></v-spacer>
-            <v-select v-model="selectedYear" :items="availableYears" label="Ano" class="mt-2 mt-sm-0 align-self-center"
-              style="max-width: 150px;" density="compact" variant="outlined"
-              @update:model-value="handleYearChange"></v-select>
-          </v-card-title>
-        </v-card>
+    <v-row class="mb-12">
+      <v-col cols="12" class="d-flex align-end justify-space-between">
+        <div>
+          <h1 class="text-h2 font-weight-black mb-2 tracking-tight">Dashboard</h1>
+          <p class="text-subtitle-1 text-slate-500 font-medium">Curadoria de dados e desempenho orçamentário PlacoonCI</p>
+        </div>
+        <div style="width: 240px;">
+          <v-select
+            v-model="selectedYear"
+            :items="availableYears"
+            label="Exercício Fiscal"
+            hide-details
+            variant="filled"
+            density="comfortable"
+            @update:model-value="handleYearChange"
+          ></v-select>
+        </div>
       </v-col>
     </v-row>
 
@@ -31,37 +34,57 @@
     </v-row>
 
     <template v-else>
-      <v-row class="mt-4">
+      <v-row class="mb-12">
         <v-col cols="12" sm="6" md="3">
-          <v-card elevation="2" class="rounded-lg h-100" color="primary" dark>
-            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Total Esperado</div>
-              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalBudget) }}</div>
-            </v-card-text>
+          <v-card class="pa-6 bg-surface-container-lowest elevation-0 no-line-card">
+            <div class="d-flex flex-column">
+              <div class="rounded-xl pa-4 bg-surface-container-low mb-6 align-self-start">
+                <v-icon color="primary" size="32">mdi-currency-usd</v-icon>
+              </div>
+              <div>
+                <div class="text-overline font-weight-bold mb-1">TOTAL EXPECTED</div>
+                <div class="text-h4 font-weight-black">{{ formatCurrency(totalBudget) }}</div>
+              </div>
+            </div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
-          <v-card elevation="2" class="rounded-lg h-100" color="success" dark>
-            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Executado</div>
-              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalExecuted) }}</div>
-            </v-card-text>
+          <v-card class="pa-6 bg-surface-container-lowest elevation-0 no-line-card">
+            <div class="d-flex flex-column">
+              <div class="rounded-xl pa-4 bg-surface-container-low mb-6 align-self-start">
+                <v-icon color="success" size="32">mdi-check-circle-outline</v-icon>
+              </div>
+              <div>
+                <div class="text-overline font-weight-bold mb-1">EXECUTED</div>
+                <div class="text-h4 font-weight-black">{{ formatCurrency(totalExecuted) }}</div>
+              </div>
+            </div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
-          <v-card elevation="2" class="rounded-lg h-100" color="warning" dark>
-            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Pendente</div>
-              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalPending) }}</div>
-            </v-card-text>
+          <v-card class="pa-6 bg-surface-container-lowest elevation-0 no-line-card">
+            <div class="d-flex flex-column">
+              <div class="rounded-xl pa-4 bg-surface-container-low mb-6 align-self-start">
+                <v-icon color="warning" size="32">mdi-clock-outline</v-icon>
+              </div>
+              <div>
+                <div class="text-overline font-weight-bold mb-1">PENDING</div>
+                <div class="text-h4 font-weight-black">{{ formatCurrency(totalPending) }}</div>
+              </div>
+            </div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
-          <v-card elevation="2" class="rounded-lg h-100" color="error" dark>
-            <v-card-text class="text-center d-flex flex-column justify-center h-100 pa-3 pa-sm-4">
-              <div class="text-subtitle-1 text-sm-h6 mb-2">Ressarcimento Atrasado</div>
-              <div class="text-h5 text-sm-h4">{{ formatCurrency(totalOverdue) }}</div>
-            </v-card-text>
+          <v-card class="pa-6 bg-surface-container-lowest elevation-0 no-line-card">
+            <div class="d-flex flex-column">
+              <div class="rounded-xl pa-4 bg-surface-container-low mb-6 align-self-start">
+                <v-icon color="error" size="32">mdi-alert-circle-outline</v-icon>
+              </div>
+              <div>
+                <div class="text-overline font-weight-bold mb-1">OVERDUE</div>
+                <div class="text-h4 font-weight-black">{{ formatCurrency(totalOverdue) }}</div>
+              </div>
+            </div>
           </v-card>
         </v-col>
       </v-row>
@@ -100,14 +123,17 @@
 
       <v-row class="mt-4">
         <v-col cols="12">
-          <v-card class="mb-4">
-            <v-card-title class="text-subtitle-1 text-sm-h6 primary--text py-3 py-sm-4 px-4 px-sm-6">
-              <v-icon size="small" size-sm="default" class="mr-2">mdi-cash-multiple</v-icon>
+          <v-card class="mb-10 bg-surface-container-lowest elevation-0 no-line-card">
+            <v-card-title class="text-h5 font-weight-bold primary--text py-8 px-8 border-none">
               Resumo Financeiro por Área
             </v-card-title>
-            <v-card-text class="pa-1 pa-sm-3">
-              <v-data-table :headers="headersAreasSummary" :items="areasSummary" class="elevation-1" density="compact"
-                hide-default-footer>
+            <v-card-text class="pa-0">
+              <v-data-table
+                :headers="headersAreasSummary"
+                :items="areasSummary"
+                class="bg-transparent custom-table"
+                hide-default-footer
+              >
                 <template v-slot:item.budget="{ item }">
                   <span class="text-end">{{ formatCurrency(item.budget) }}</span>
                 </template>
@@ -489,6 +515,23 @@ export default {
 </script>
 
 <style scoped>
+.bg-indigo-50 { background-color: #EEF2FF !important; }
+.bg-emerald-50 { background-color: #ECFDF5 !important; }
+.bg-amber-50 { background-color: #FFFBEB !important; }
+.bg-rose-50 { background-color: #FFF1F2 !important; }
+
+.text-indigo-600 { color: #4F46E5 !important; }
+.text-emerald-600 { color: #059669 !important; }
+.text-amber-600 { color: #D97706 !important; }
+.text-rose-600 { color: #E11D48 !important; }
+
+.text-slate-900 { color: #0F172A !important; }
+.text-slate-500 { color: #64748B !important; }
+.text-slate-400 { color: #94A3B8 !important; }
+
+.border-none { border: none !important; }
+.elevation-sm { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important; }
+
 .v-card {
   transition: transform 0.3s, box-shadow 0.3s;
   height: 100%;
@@ -513,25 +556,33 @@ export default {
   justify-content: center;
 }
 
-.v-table {
-  background-color: #ffffff;
+.custom-table {
+  border: none !important;
 }
 
-.v-table thead th {
-  background-color: #f5f5f5;
-  font-weight: 600;
-  color: #333333;
-  font-family: 'Roboto', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.custom-table :deep(thead th) {
+  background-color: transparent !important;
+  font-weight: 700 !important;
+  color: #3f4941 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  font-size: 0.75rem !important;
+  border-bottom: none !important;
+  padding: 16px 32px !important;
 }
 
-.v-table tbody td {
-  font-family: 'Roboto', sans-serif;
+.custom-table :deep(tbody td) {
+  padding: 24px 32px !important;
+  border-bottom: none !important;
+  font-size: 0.95rem !important;
 }
 
-.v-table tbody tr:hover {
-  background-color: #f8f9fa;
+.custom-table :deep(tbody tr:nth-of-type(even)) {
+  background-color: #f0f4fd !important;
+}
+
+.custom-table :deep(tbody tr:hover) {
+  background-color: #eaeef7 !important;
 }
 
 .text-end {

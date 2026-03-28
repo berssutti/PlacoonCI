@@ -1,69 +1,58 @@
 <template>
-  <v-card elevation="2" class="rounded-lg h-100 project-card" @click="$emit('click')">
-    <v-card-title class="text-h6 d-flex align-center">
-      <v-icon class="mr-2">mdi-file-document-outline</v-icon>
-      <span class="text-truncate">{{ project.name }}</span>
-      <v-spacer></v-spacer>
-      <v-tooltip v-if="project.has_alerts" text="Este projeto possui alertas">
-        <template v-slot:activator="{ props }">
-          <v-icon v-bind="props" color="error" class="ml-2">mdi-alert-circle</v-icon>
-        </template>
-      </v-tooltip>
-    </v-card-title>
-    <v-card-subtitle>
-      Processo SEI: {{ project.processo_sei }}
-    </v-card-subtitle>
-    <v-card-text>
-      <v-row no-gutters>
-        <v-col cols="12" class="mb-2">
-          <div class="caption text-uppercase font-weight-bold text-grey">Coordenador</div>
-          <div>{{ project.coordinator }}</div>
+  <v-card class="project-card pa-6 bg-surface-container-lowest no-line-card" @click="$emit('click')">
+    <v-card-item class="pa-0 mb-6">
+      <template v-slot:prepend>
+        <v-avatar color="surface-container-low" rounded="xl" size="56" class="mr-4">
+          <v-icon color="primary" size="28">mdi-folder-outline</v-icon>
+        </v-avatar>
+      </template>
+      <v-card-title class="text-h6 font-weight-bold mb-n1">
+        <span class="text-truncate d-inline-block" style="max-width: 200px;">{{ project.name }}</span>
+      </v-card-title>
+      <v-card-subtitle class="text-caption">
+        SEI: {{ project.processo_sei }}
+      </v-card-subtitle>
+      <template v-slot:append>
+        <v-tooltip v-if="project.has_alerts" text="Este projeto possui alertas">
+          <template v-slot:activator="{ props }">
+            <v-icon v-bind="props" color="error" size="small">mdi-alert-circle</v-icon>
+          </template>
+        </v-tooltip>
+      </template>
+    </v-card-item>
+
+    <v-card-text class="pa-0">
+      <div class="mb-6">
+        <div class="text-overline font-weight-bold mb-1">COORDINATOR</div>
+        <div class="text-body-1 font-weight-medium text-on-surface">{{ project.coordinator }}</div>
+      </div>
+
+      <v-row no-gutters class="mb-8">
+        <v-col cols="6">
+          <div class="text-overline font-weight-bold mb-1">START DATE</div>
+          <div class="text-body-1 text-on-surface">{{ formatDate(project.start_date) }}</div>
         </v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col cols="6" class="mb-2">
-          <div class="caption text-uppercase font-weight-bold text-grey">Início</div>
-          <div>{{ formatDate(project.start_date) }}</div>
-        </v-col>
-        <v-col cols="6" class="mb-2">
-          <div class="caption text-uppercase font-weight-bold text-grey">Término</div>
-          <div>{{ formatDate(project.end_date) }}</div>
-        </v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col cols="12">
-          <div class="caption text-uppercase font-weight-bold text-grey mb-1">Situação do Projeto</div>
-          <v-chip :color="getStatusColor(projectStatus)" text-color="white" small class="px-2">
-            <v-icon small left>{{ getStatusIcon(projectStatus) }}</v-icon>
-            {{ projectStatus }}
-          </v-chip>
-          <div class="mt-2 text-caption">
-            {{ remainingTime }}
-          </div>
+        <v-col cols="6">
+          <div class="text-overline font-weight-bold mb-1">END DATE</div>
+          <div class="text-body-1 text-on-surface">{{ formatDate(project.end_date) }}</div>
         </v-col>
       </v-row>
 
-      <v-divider class="my-3"></v-divider>
-
-      <v-row no-gutters>
-        <v-col cols="12">
-          <div class="caption text-uppercase font-weight-bold text-grey mb-2">Informações de Custo</div>
-          <v-row no-gutters>
-            <v-col cols="6" class="mb-2">
-              <div class="text-caption text-grey">Valor Total</div>
-              <div class="font-weight-medium">{{ formatCurrency(project.total_fcte_amount_expected) }}</div>
-            </v-col>
-          </v-row>
-        </v-col>
-      </v-row>
+      <div class="d-flex align-center justify-space-between mt-6 pt-6" style="border-top: 2px solid #f0f4fd">
+        <v-chip
+          :color="getStatusColor(projectStatus)"
+          variant="flat"
+          size="small"
+          class="font-weight-bold px-4"
+          style="background-color: #d4e3ff !important; color: #001c3a !important"
+        >
+          {{ projectStatus }}
+        </v-chip>
+        <div class="text-h6 font-weight-black text-primary">
+          {{ formatCurrency(project.total_fcte_amount_expected) }}
+        </div>
+      </div>
     </v-card-text>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="primary" text @click.stop="$emit('click')">
-        Ver Detalhes
-        <v-icon right>mdi-arrow-right</v-icon>
-      </v-btn>
-    </v-card-actions>
   </v-card>
 </template>
 
