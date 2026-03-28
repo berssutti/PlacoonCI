@@ -1,18 +1,46 @@
 from datetime import datetime
 from decimal import Decimal
-from django.db.models import Q
+from typing import Any, Dict, List, Tuple
+from django.db.models import Q, QuerySet
 from ..models import Project, Installment
 
 
-def get_overview_data(queryset, year: int) -> dict:
-    start_of_year = datetime(year, 1, 1)
-    end_of_year = datetime(year, 12, 31)
+def sum_amounts(inst_list: List[Installment]) -> Decimal:
+    """Sum amounts of a list of installments returning Decimal."""
+    return sum((Decimal(str(inst.amount or 0)) for inst in inst_list), Decimal("0"))
 
-    # Optimization: Fetch projects with their areas in one query
+
+def distribute_to_areas(
+    installs: List[Installment],
+    field_key: str,
+    p_areas: List[Any],
+    areas_summary_map: Dict[str, Dict[str, Any]],
+) -> None:
+    """Distribute installment amounts to project areas in the summary map."""
+    for inst in installs:
+        amount = Decimal(str(inst.amount or 0))
+        for pa in p_areas:
+            area_name = pa.area.name
+            if area_name not in areas_summary_map:
+                areas_summary_map[area_name] = {
+                    "name": area_name,
+                    "budget": 0.0,
+                    "executed": 0.0,
+                    "pending": 0.0,
+                    "overdue": 0.0,
+                    "progress": 0.0,
+                }
+
+            share = amount * (pa.percentage / Decimal("100"))
+            areas_summary_map[area_name][field_key] += float(share)
+
+
+def _get_projects_and_installments(
+    queryset: QuerySet, start_of_year: datetime, end_of_year: datetime
+) -> Tuple[List[Project], List[int], QuerySet]:
+    """Fetch projects and relevant installments for the year."""
     projects = list(
-        queryset
-        .order_by("start_date")
-        .filter(
+        queryset.order_by("start_date").filter(
             Q(start_date__lte=end_of_year)
             & (Q(end_date__gte=start_of_year) | Q(end_date__isnull=True))
         )
@@ -20,8 +48,6 @@ def get_overview_data(queryset, year: int) -> dict:
 
     project_ids = [p.id for p in projects]
 
-    # Optimization: Fetch all relevant installments in one query
-    # We fetch a superset of installments needed for all metrics to avoid multiple DB hits
     all_installments = (
         Installment.objects.filter(project_id__in=project_ids)
         .filter(
@@ -34,12 +60,27 @@ def get_overview_data(queryset, year: int) -> dict:
         .select_related("project")
     )
 
-    # In-memory categorization
+    return projects, project_ids, all_installments
+
+
+def _categorize_installments(
+    all_installments: QuerySet,
+    project_ids: List[int],
+    start_of_year: datetime,
+    end_of_year: datetime,
+) -> Tuple[
+    List[Installment],
+    List[Installment],
+    List[Installment],
+    Dict[int, List[Installment]],
+    Dict[int, List[Installment]],
+    Dict[int, List[Installment]],
+]:
+    """Categorize installments into executed, pending, and overdue."""
     installments_executed = []
     installments_pending = []
     installments_overdue = []
 
-    # Maps for quick lookup per project
     project_executed_map = {p_id: [] for p_id in project_ids}
     project_pending_map = {p_id: [] for p_id in project_ids}
     project_overdue_map = {p_id: [] for p_id in project_ids}
@@ -70,16 +111,23 @@ def get_overview_data(queryset, year: int) -> dict:
             installments_overdue.append(inst)
             project_overdue_map[inst.project_id].append(inst)
 
-    # Helper to sum amounts
-    def sum_amounts(inst_list):
-        return float(sum(inst.amount or 0 for inst in inst_list))
+    return (
+        installments_executed,
+        installments_pending,
+        installments_overdue,
+        project_executed_map,
+        project_pending_map,
+        project_overdue_map,
+    )
 
-    total_executed = sum_amounts(installments_executed)
-    total_pending = sum_amounts(installments_pending)
-    total_overdue = sum_amounts(installments_overdue)
-    total_expected = total_executed + total_pending + total_overdue
 
-    # Projects Summary
+def _build_projects_summary(
+    projects: List[Project],
+    project_executed_map: Dict[int, List[Installment]],
+    project_pending_map: Dict[int, List[Installment]],
+    project_overdue_map: Dict[int, List[Installment]],
+) -> List[Dict[str, Any]]:
+    """Build the detailed projects summary list."""
     projects_summary = []
     for project in projects:
         p_exec = project_executed_map[project.id]
@@ -108,53 +156,42 @@ def get_overview_data(queryset, year: int) -> dict:
         projects_summary.append(
             {
                 "name": project.name,
-                "expected": val_executed + val_pending + val_overdue,
-                "executed": val_executed,
-                "pending": val_pending,
-                "overdue": val_overdue,
+                "expected": float(val_executed + val_pending + val_overdue),
+                "executed": float(val_executed),
+                "pending": float(val_pending),
+                "overdue": float(val_overdue),
                 "coordinator": project_coordinator,
                 "start_date": project_start_date,
                 "areas": areas_name_list,
                 "total_installments": total_installments_count,
             }
         )
+    return projects_summary
 
-    # Areas Summary
-    areas_summary_map = {}  # name -> data dict
 
-    # We reuse the previously categorized lists
-    # But we need to iterate projects to get area percentages
-
-    # To avoid N*M complexity, we can iterate projects and their specific installs
+def _build_areas_summary(
+    projects: List[Project],
+    project_executed_map: Dict[int, List[Installment]],
+    project_pending_map: Dict[int, List[Installment]],
+    project_overdue_map: Dict[int, List[Installment]],
+) -> List[Dict[str, Any]]:
+    """Build the areas summary list."""
+    areas_summary_map = {}
     for project in projects:
         p_areas = project.projectarea_set.all()
         if not p_areas:
             continue
 
-        # Function to distribute amount to areas
-        def distribute_to_areas(installs, field_key):
-            for inst in installs:
-                amount = Decimal(str(inst.amount or 0))
-                for pa in p_areas:
-                    area_name = pa.area.name
-                    if area_name not in areas_summary_map:
-                        areas_summary_map[area_name] = {
-                            "name": area_name,
-                            "budget": 0.0,
-                            "executed": 0.0,
-                            "pending": 0.0,
-                            "overdue": 0.0,
-                            "progress": 0.0,
-                        }
+        distribute_to_areas(
+            project_executed_map[project.id], "executed", p_areas, areas_summary_map
+        )
+        distribute_to_areas(
+            project_pending_map[project.id], "pending", p_areas, areas_summary_map
+        )
+        distribute_to_areas(
+            project_overdue_map[project.id], "overdue", p_areas, areas_summary_map
+        )
 
-                    share = amount * (pa.percentage / Decimal("100"))
-                    areas_summary_map[area_name][field_key] += float(share)
-
-        distribute_to_areas(project_executed_map[project.id], "executed")
-        distribute_to_areas(project_pending_map[project.id], "pending")
-        distribute_to_areas(project_overdue_map[project.id], "overdue")
-
-    # Calculate budget and progress for areas
     areas_summary = []
     for name, data in areas_summary_map.items():
         data["budget"] = data["executed"] + data["pending"] + data["overdue"]
@@ -162,19 +199,21 @@ def get_overview_data(queryset, year: int) -> dict:
             (data["executed"] / data["budget"] * 100) if data["budget"] > 0 else 0
         )
         areas_summary.append(data)
+    return areas_summary
 
-    # Monthly Summary
-    monthly_summary = {}
-    for month in range(1, 13):
-        monthly_summary[month] = 0.0
 
+def _build_monthly_summaries(
+    installments_executed: List[Installment],
+    projects: List[Project],
+    project_executed_map: Dict[int, List[Installment]],
+) -> Tuple[Dict[int, float], Dict[int, Dict[str, float]]]:
+    """Build monthly totals and monthly area summaries."""
+    monthly_summary = {month: 0.0 for month in range(1, 13)}
     for inst in installments_executed:
         m = inst.effective_date.month
         monthly_summary[m] += float(inst.amount or 0)
 
-    # Monthly Area Summary
     monthly_area_summary = {m: {} for m in range(1, 13)}
-
     for project in projects:
         p_exec = project_executed_map[project.id]
         p_areas = project.projectarea_set.all()
@@ -186,34 +225,84 @@ def get_overview_data(queryset, year: int) -> dict:
             for pa in p_areas:
                 area_name = pa.area.name
                 if area_name not in monthly_area_summary[m]:
-                    monthly_area_summary[m][area_name] = 0
+                    monthly_area_summary[m][area_name] = 0.0
 
                 share = amount * (pa.percentage / Decimal("100"))
                 monthly_area_summary[m][area_name] += float(share)
 
-    institution_summary = {"FCTE": total_executed}  # Sum of execution for this year
+    return monthly_summary, monthly_area_summary
 
-    # Year Summary
+
+def _build_aggregated_summaries(
+    installments_executed: List[Installment], total_executed: Decimal
+) -> Tuple[Dict[str, float], Dict[int, float], Dict[str, float]]:
+    """Build institution, year, and destination summaries."""
+    institution_summary = {"FCTE": float(total_executed)}
+
     year_summary = {}
     for inst in installments_executed:
         y = inst.effective_date.year
         if y not in year_summary:
-            year_summary[y] = 0
+            year_summary[y] = 0.0
         year_summary[y] += float(inst.amount or 0)
 
-    # Destination Summary
     destination_summary = {}
     for inst in installments_executed:
         destination = inst.destination or "Não especificado"
         if destination not in destination_summary:
-            destination_summary[destination] = 0
+            destination_summary[destination] = 0.0
         destination_summary[destination] += float(inst.amount or 0)
 
+    return institution_summary, year_summary, destination_summary
+
+
+def get_overview_data(queryset: QuerySet, year: int) -> Dict[str, Any]:
+    """
+    Main entry point for retrieving overview data for a specific year.
+    Orchestrates data fetching, categorization, and summary building.
+    """
+    start_of_year = datetime(year, 1, 1)
+    end_of_year = datetime(year, 12, 31)
+
+    projects, project_ids, all_installments = _get_projects_and_installments(
+        queryset, start_of_year, end_of_year
+    )
+
+    (
+        installments_executed,
+        installments_pending,
+        installments_overdue,
+        project_executed_map,
+        project_pending_map,
+        project_overdue_map,
+    ) = _categorize_installments(all_installments, project_ids, start_of_year, end_of_year)
+
+    total_executed = sum_amounts(installments_executed)
+    total_pending = sum_amounts(installments_pending)
+    total_overdue = sum_amounts(installments_overdue)
+    total_expected = total_executed + total_pending + total_overdue
+
+    projects_summary = _build_projects_summary(
+        projects, project_executed_map, project_pending_map, project_overdue_map
+    )
+
+    areas_summary = _build_areas_summary(
+        projects, project_executed_map, project_pending_map, project_overdue_map
+    )
+
+    monthly_summary, monthly_area_summary = _build_monthly_summaries(
+        installments_executed, projects, project_executed_map
+    )
+
+    institution_summary, year_summary, destination_summary = _build_aggregated_summaries(
+        installments_executed, total_executed
+    )
+
     return {
-        "total_expected": total_expected,
-        "total_executed": total_executed,
-        "total_pending": total_pending,
-        "total_overdue": total_overdue,
+        "total_expected": float(total_expected),
+        "total_executed": float(total_executed),
+        "total_pending": float(total_pending),
+        "total_overdue": float(total_overdue),
         "areas_summary": areas_summary,
         "institution_summary": institution_summary,
         "year_summary": year_summary,
