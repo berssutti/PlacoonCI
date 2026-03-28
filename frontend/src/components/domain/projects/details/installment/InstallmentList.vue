@@ -16,7 +16,8 @@
       <template v-slot:activator="{ props }">
         <v-list-item v-bind="props" @click="toggleDetails(index)">
 
-          <v-list-item-title>
+          <v-list-item-title :id="`installment-${installment.id}`" :class="{ 'text-error font-weight-bold': installment.status === 'Atrasada' }">
+            <v-icon v-if="installment.status === 'Atrasada'" color="error" size="small" class="mr-1">mdi-alert-circle-outline</v-icon>
             Parcela {{ index + 1 }} - Estado: {{ installment.status }} - R$ {{ formatNumber(installment.amount) }}
           </v-list-item-title>
 
@@ -55,7 +56,8 @@
 </template>
 
 <script>
-import { ref, defineComponent, toRefs } from 'vue';
+import { ref, defineComponent, toRefs, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { dateFormatter } from '@/utils/dateFormatter';
 import { numberFormatter } from '@/utils/numberFormatter';
 
@@ -71,6 +73,7 @@ export default defineComponent({
   emits: ['add', 'edit', 'delete', 'chart'],
   setup(props, { emit }) {
     const { installments } = toRefs(props);
+    const route = useRoute();
 
     const formatDate = (date) => dateFormatter(date);
     const formatNumber = (num) => numberFormatter(num);
@@ -83,6 +86,26 @@ export default defineComponent({
     const emitDelete = (id) => emit('delete', id);
 
     const toggleDetails = (index) => expandedIndex.value = index;
+
+    const highlightInstallment = () => {
+      const highlightId = route.query.highlight_installment;
+      if (highlightId && installments.value.length > 0) {
+        const index = installments.value.findIndex(i => String(i.id) === String(highlightId));
+        if (index !== -1) {
+          expandedIndex.value = index;
+          // Smooth scroll to the element
+          setTimeout(() => {
+            const element = document.getElementById(`installment-${highlightId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 500);
+        }
+      }
+    };
+
+    onMounted(highlightInstallment);
+    watch(() => installments.value, highlightInstallment);
 
     return {
       installments,

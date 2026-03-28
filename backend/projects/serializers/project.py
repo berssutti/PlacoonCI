@@ -12,6 +12,7 @@ class ProjectAreaSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     areas = ProjectAreaSerializer(source="projectarea_set", many=True)
+    has_alerts = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Project
@@ -40,6 +41,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "internal_plan",
             "internal_plan_name",
             "areas",
+            "has_alerts",
         ]
         read_only_fields = ["total_fcte_amount_expected"]
 
