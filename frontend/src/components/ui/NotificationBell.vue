@@ -44,7 +44,7 @@
         <v-btn block variant="text" size="small" @click="menu = false">Fechar</v-btn>
       </v-card-actions>
     </v-card>
-  </v-card>
+  </v-menu>
 </template>
 
 <script setup>
