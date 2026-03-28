@@ -1,15 +1,17 @@
 <template>
   <v-container fluid>
-    <v-row class="mb-6">
-      <v-col cols="12" class="d-flex align-center justify-space-between">
+    <v-row class="mb-12">
+      <v-col cols="12" class="d-flex align-end justify-space-between">
         <div>
-          <h1 class="text-h4 font-weight-bold mb-1">Projetos</h1>
-          <p class="text-subtitle-1 text-grey">Gerencie e acompanhe todos os projetos</p>
+          <h1 class="text-h2 font-weight-black mb-2 tracking-tight">Projetos</h1>
+          <p class="text-subtitle-1 text-slate-500 font-medium">Gerenciamento institucional de iniciativas PlacoonCI</p>
         </div>
         <v-btn
           color="primary"
           prepend-icon="mdi-plus"
           size="large"
+          class="px-8 py-3"
+          style="background: linear-gradient(135deg, #004e2d 0%, #00693e 100%) !important"
           @click="goToCreateProject"
         >
           Novo Projeto
@@ -17,9 +19,9 @@
       </v-col>
     </v-row>
 
-    <v-row class="mb-6">
+    <v-row class="mb-12">
       <v-col cols="12">
-        <v-card class="pa-4">
+        <v-card class="pa-8 bg-surface-container-low no-line-card">
           <ProjectFilter :years="years" :initial-filters="initialFilters" @update:filters="updateFilters" />
         </v-card>
       </v-col>

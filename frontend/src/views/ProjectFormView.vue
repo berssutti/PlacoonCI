@@ -1,11 +1,11 @@
 <template>
   <v-container fluid>
-    <v-row class="mb-6">
-      <v-col cols="12" class="d-flex align-center">
-        <v-btn icon="mdi-arrow-left" variant="text" @click="$router.back()" class="mr-4"></v-btn>
+    <v-row class="mb-12">
+      <v-col cols="12" class="d-flex align-end">
+        <v-btn icon="mdi-arrow-left" variant="text" @click="$router.back()" class="mr-6 bg-surface-container-low rounded-xl" size="large"></v-btn>
         <div>
-          <h1 class="text-h4 font-weight-bold mb-1">{{ isEditing ? 'Editar Projeto' : 'Novo Projeto' }}</h1>
-          <p class="text-subtitle-1 text-grey">Preencha as informações do projeto abaixo</p>
+          <h1 class="text-h2 font-weight-black mb-2 tracking-tight">{{ isEditing ? 'Editar Projeto' : 'Novo Projeto' }}</h1>
+          <p class="text-subtitle-1 text-slate-500 font-medium">Formulário de curadoria de projetos PlacoonCI</p>
         </div>
       </v-col>
     </v-row>
@@ -13,9 +13,9 @@
     <v-row justify="center">
       <v-col cols="12" lg="10">
         <v-form @submit.prevent="saveProject">
-          <v-card class="mb-6">
-            <v-card-title class="pa-6 border-b font-weight-bold">Informações Gerais</v-card-title>
-            <v-card-text class="pa-6">
+          <v-card class="mb-10 bg-surface-container-lowest elevation-0 no-line-card">
+            <v-card-title class="pa-8 font-weight-bold text-h5 text-primary">Informações Gerais</v-card-title>
+            <v-card-text class="pa-8 pt-0">
               <GeneralInfo v-model:project="project" :rules="rules" />
             </v-card-text>
           </v-card>

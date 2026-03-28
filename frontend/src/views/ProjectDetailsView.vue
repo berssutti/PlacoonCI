@@ -1,12 +1,12 @@
 <template>
   <v-container fluid>
-    <v-row class="mb-6">
-      <v-col cols="12" class="d-flex align-center justify-space-between">
+    <v-row class="mb-12">
+      <v-col cols="12" class="d-flex align-end justify-space-between">
         <div class="d-flex align-center">
-          <v-btn icon="mdi-arrow-left" variant="text" @click="handleBack" class="mr-4"></v-btn>
+          <v-btn icon="mdi-arrow-left" variant="text" @click="handleBack" class="mr-6 bg-surface-container-low rounded-xl" size="large"></v-btn>
           <div>
-            <h1 class="text-h4 font-weight-bold mb-1">Detalhes do Projeto</h1>
-            <p class="text-subtitle-1 text-grey" v-if="project">{{ project.name }}</p>
+            <h1 class="text-h2 font-weight-black mb-2 tracking-tight">Detalhes</h1>
+            <p class="text-subtitle-1 text-slate-500 font-medium" v-if="project">{{ project.name }}</p>
           </div>
         </div>
         <div class="d-flex gap-2">
@@ -79,12 +79,12 @@
 
       <v-col cols="12" md="4">
         <!-- Sidebar style summary if needed -->
-        <v-card v-if="project" class="mb-6">
-           <v-card-title class="pa-6 border-b">Resumo Financeiro</v-card-title>
-           <v-card-text class="pa-6">
-              <div class="mb-4">
-                <div class="text-caption text-grey font-weight-bold text-uppercase mb-1">TOTAL ESPERADO</div>
-                <div class="text-h5 font-weight-bold">{{ formatCurrency(project.total_fcte_amount_expected) }}</div>
+        <v-card v-if="project" class="mb-6 bg-surface-container-low no-line-card">
+           <v-card-title class="pa-8 font-weight-bold text-overline">RESUMO FINANCEIRO</v-card-title>
+           <v-card-text class="pa-8 pt-0">
+              <div class="mb-8">
+                <div class="text-overline font-weight-bold mb-1">TOTAL EXPECTED</div>
+                <div class="text-h4 font-weight-black text-primary">{{ formatCurrency(project.total_fcte_amount_expected) }}</div>
               </div>
               <v-divider class="my-4"></v-divider>
               <div class="d-flex justify-space-between mb-2">

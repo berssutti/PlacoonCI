@@ -1,12 +1,12 @@
 <template>
-  <v-card class="project-card pa-2" @click="$emit('click')">
-    <v-card-item>
+  <v-card class="project-card pa-6 bg-surface-container-lowest no-line-card" @click="$emit('click')">
+    <v-card-item class="pa-0 mb-6">
       <template v-slot:prepend>
-        <v-avatar color="indigo-lighten-5" rounded="lg" class="mr-3">
-          <v-icon color="primary">mdi-folder-outline</v-icon>
+        <v-avatar color="surface-container-low" rounded="xl" size="56" class="mr-4">
+          <v-icon color="primary" size="28">mdi-folder-outline</v-icon>
         </v-avatar>
       </template>
-      <v-card-title class="text-subtitle-1 font-weight-bold">
+      <v-card-title class="text-h6 font-weight-bold mb-n1">
         <span class="text-truncate d-inline-block" style="max-width: 200px;">{{ project.name }}</span>
       </v-card-title>
       <v-card-subtitle class="text-caption">
@@ -21,33 +21,34 @@
       </template>
     </v-card-item>
 
-    <v-card-text class="pt-2">
-      <div class="mb-4">
-        <div class="text-caption text-grey font-weight-bold text-uppercase mb-1">Coordenador</div>
-        <div class="text-body-2 font-weight-medium">{{ project.coordinator }}</div>
+    <v-card-text class="pa-0">
+      <div class="mb-6">
+        <div class="text-overline font-weight-bold mb-1">COORDINATOR</div>
+        <div class="text-body-1 font-weight-medium text-on-surface">{{ project.coordinator }}</div>
       </div>
 
-      <v-row no-gutters class="mb-4">
+      <v-row no-gutters class="mb-8">
         <v-col cols="6">
-          <div class="text-caption text-grey font-weight-bold text-uppercase mb-1">Início</div>
-          <div class="text-body-2">{{ formatDate(project.start_date) }}</div>
+          <div class="text-overline font-weight-bold mb-1">START DATE</div>
+          <div class="text-body-1 text-on-surface">{{ formatDate(project.start_date) }}</div>
         </v-col>
         <v-col cols="6">
-          <div class="text-caption text-grey font-weight-bold text-uppercase mb-1">Término</div>
-          <div class="text-body-2">{{ formatDate(project.end_date) }}</div>
+          <div class="text-overline font-weight-bold mb-1">END DATE</div>
+          <div class="text-body-1 text-on-surface">{{ formatDate(project.end_date) }}</div>
         </v-col>
       </v-row>
 
-      <div class="d-flex align-center justify-space-between mt-auto pt-4 border-t">
+      <div class="d-flex align-center justify-space-between mt-6 pt-6" style="border-top: 2px solid #f0f4fd">
         <v-chip
           :color="getStatusColor(projectStatus)"
-          variant="tonal"
+          variant="flat"
           size="small"
-          class="font-weight-bold"
+          class="font-weight-bold px-4"
+          style="background-color: #d4e3ff !important; color: #001c3a !important"
         >
           {{ projectStatus }}
         </v-chip>
-        <div class="text-subtitle-2 font-weight-bold text-primary">
+        <div class="text-h6 font-weight-black text-primary">
           {{ formatCurrency(project.total_fcte_amount_expected) }}
         </div>
       </div>
